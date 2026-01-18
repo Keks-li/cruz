@@ -1,4 +1,6 @@
-# Miscellaneous
+# ---------------------------------------
+# MISCELLANEOUS
+# ---------------------------------------
 *.class
 *.log
 *.pyc
@@ -12,37 +14,65 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# ---------------------------------------
+# EDITOR / IDE SETTINGS
+# ---------------------------------------
+# IntelliJ / Android Studio
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
+# Visual Studio Code
+# (Uncomment the line below if you want to ignore VS Code settings)
 #.vscode/
 
-# Flutter/Dart/Pub related
+# ---------------------------------------
+# FLUTTER / DART / PUB
+# ---------------------------------------
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
 /coverage/
 
-# Symbolication related
-app.*.symbols
+# ---------------------------------------
+# ANDROID (Specific)
+# ---------------------------------------
+# ⚠️ SECURITY: Never upload signing keys or local SDK paths
+android/key.properties
+android/local.properties
+android/gradlew
+android/gradlew.bat
 
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
+# Build artifacts
 /android/app/debug
 /android/app/profile
 /android/app/release
 
-# Environment variables
+# ---------------------------------------
+# iOS (Specific)
+# ---------------------------------------
+# Generated config files - Do not upload
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Runner/GeneratedPluginRegistrant.*
+
+# ---------------------------------------
+# SYMBOLS & OBFUSCATION
+# ---------------------------------------
+app.*.symbols
+app.*.map.json
+
+# ---------------------------------------
+# 🔒 SECURITY & ENV VARIABLES
+# ---------------------------------------
 .env
+.env.*
+*.env

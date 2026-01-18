@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.cruzaro_ent"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.1.12297006"
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

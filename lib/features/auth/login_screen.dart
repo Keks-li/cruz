@@ -15,10 +15,16 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  int _userType = 0; // 0: FIELD AGENT, 1: SYSTEM ADMIN (just for UI toggle)
+  int _userType = 0; // 0: FIELD AGENT, 1: SYSTEM ADMIN
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+
+  // Design System Colors
+  static const Color primaryNavy = Color(0xFF0F172A);
+  static const Color bgColor = Color(0xFFF8FAFC);
+  static const Color inputBg = Color(0xFFF1F5F9);
+  static const Color textSlate = Color(0xFF1E293B);
 
   @override
   void dispose() {
@@ -91,7 +97,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Sign Up as Agent'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Sign Up as Agent', style: TextStyle(color: primaryNavy, fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -100,7 +107,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
@@ -118,18 +125,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: fullNameController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Full Name',
-                    hintText: 'Enter your full name',
+                    filled: true,
+                    fillColor: inputBg,
+                    border: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.circular(12)),
                   ),
                   enabled: !isLoading,
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: emailController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Email Address',
-                    hintText: 'your@email.com',
+                    filled: true,
+                    fillColor: inputBg,
+                    border: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.circular(12)),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   enabled: !isLoading,
@@ -137,9 +148,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: passwordController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Password',
-                    hintText: 'Minimum 6 characters',
+                    filled: true,
+                    fillColor: inputBg,
+                    border: OutlineInputBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.circular(12)),
                   ),
                   obscureText: true,
                   enabled: !isLoading,
@@ -150,7 +163,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           actions: [
             TextButton(
               onPressed: isLoading ? null : () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               onPressed: isLoading
@@ -211,8 +224,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       }
                     },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.agentPrimaryColor,
+                backgroundColor: primaryNavy,
                 foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: isLoading
                   ? const SizedBox(
@@ -234,105 +248,176 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: bgColor,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(Icons.shield_rounded, size: 80, color: AppTheme.primaryColor),
-              const SizedBox(height: 16),
-              const Center(
-                child: Text(
-                  AppConstants.appName,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Centered Floating Card
+                Container(
+                  constraints: const BoxConstraints(maxWidth: 450),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.grey.shade200),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x1F0F172A),
+                        blurRadius: 24,
+                        offset: Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Branding Section
+                      const Icon(Icons.shield_moon, size: 64, color: primaryNavy),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'CRUZARO ENT',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: primaryNavy,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Secure Access Portal',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // User Type Toggle (Styled for Navy theme)
+                      Container(
+                        decoration: BoxDecoration(
+                          color: inputBg,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.all(4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _buildToggleItem('AGENT', 0),
+                            ),
+                            Expanded(
+                              child: _buildToggleItem('ADMIN', 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Input Fields
+                      TextField(
+                        controller: _emailController,
+                        style: const TextStyle(color: textSlate),
+                        decoration: InputDecoration(
+                          hintText: 'Email Address',
+                          filled: true,
+                          fillColor: inputBg,
+                          prefixIcon: const Icon(Icons.email_outlined, color: primaryNavy),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        enabled: !_isLoading,
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        style: const TextStyle(color: textSlate),
+                        decoration: InputDecoration(
+                          hintText: 'Password',
+                          filled: true,
+                          fillColor: inputBg,
+                          prefixIcon: const Icon(Icons.lock_outline_rounded, color: primaryNavy),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        ),
+                        enabled: !_isLoading,
+                        onSubmitted: (_) => _handleLogin(),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Login Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _handleLogin,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryNavy,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : const Text(
+                                  'LOGIN',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Sign Up Link
+                      GestureDetector(
+                        onTap: _isLoading ? null : _showSignUpDialog,
+                        child: RichText(
+                          text: const TextSpan(
+                            style: TextStyle(fontSize: 14),
+                            children: [
+                              TextSpan(
+                                text: 'New Agent? ',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                              TextSpan(
+                                text: 'Sign Up Here',
+                                style: TextStyle(
+                                  color: primaryNavy,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 48),
-              
-              // Segmented Control (visual only - actual role comes from DB)
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.all(4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildToggleItem('FIELD AGENT', 0),
-                    ),
-                    Expanded(
-                      child: _buildToggleItem('SYSTEM ADMIN', 1),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(hintText: 'Email Address'),
-                keyboardType: TextInputType.emailAddress,
-                enabled: !_isLoading,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(hintText: 'Password'),
-                enabled: !_isLoading,
-                onSubmitted: (_) => _handleLogin(),
-              ),
-              const SizedBox(height: 32),
-              
-              ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _userType == 0 ? AppTheme.agentPrimaryColor : AppTheme.adminPrimaryColor,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 54),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Text('ACCESS PORTAL'),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Sign Up Link
-              TextButton(
-                onPressed: _isLoading ? null : _showSignUpDialog,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'New Agent? ',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                    Text(
-                      'Sign Up Here',
-                      style: TextStyle(
-                        color: AppTheme.agentPrimaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -343,21 +428,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isActive = _userType == index;
     return GestureDetector(
       onTap: () => setState(() => _userType = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: isActive ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           boxShadow: isActive
-              ? [const BoxShadow(color: Colors.black12, blurRadius: 4)]
+              ? [const BoxShadow(color: Color(0x0F0F172A), blurRadius: 4, offset: Offset(0, 2))]
               : [],
         ),
         child: Center(
           child: Text(
             label,
             style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isActive ? Colors.black : Colors.grey,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isActive ? primaryNavy : Colors.grey.shade500,
             ),
           ),
         ),
