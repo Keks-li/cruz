@@ -5,6 +5,7 @@ import '../../../core/theme.dart';
 import '../../../core/providers.dart';
 import '../../../providers/agent_providers.dart';
 import '../../../providers/auth_provider.dart';
+import 'add_product_dialog.dart';
 
 class LookupClientScreen extends ConsumerStatefulWidget {
   const LookupClientScreen({super.key});

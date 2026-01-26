@@ -80,3 +80,9 @@ final agentProductsProvider = FutureProvider<List<Product>>((ref) async {
   final productRepo = ref.watch(productRepositoryProvider);
   return await productRepo.fetchProducts();
 });
+
+/// Provider for settings (for registration fee)
+final settingsProvider = FutureProvider((ref) async {
+  final settingsRepo = ref.watch(settingsRepositoryProvider);
+  return await settingsRepo.getSettings();
+});
