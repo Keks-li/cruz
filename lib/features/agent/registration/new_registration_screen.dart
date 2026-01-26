@@ -222,7 +222,7 @@ class _NewRegistrationScreenState extends ConsumerState<NewRegistrationScreen> {
                       return DropdownMenuItem(
                         value: product.id,
                         child: Text(
-                          '${product.name} - GHC ${product.totalPrice.toStringAsFixed(2)}',
+                          '${product.name} - GHC ${product.boxRate.toStringAsFixed(2)}/box',
                           overflow: TextOverflow.ellipsis,
                         ),
                       );

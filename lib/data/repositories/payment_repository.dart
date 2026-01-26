@@ -219,4 +219,87 @@ class PaymentRepository {
       throw Exception('Failed to fetch customer payments: $e');
     }
   }
+
+  /// Fetch agent's total collection for a specific date (Point 6)
+  Future<double> fetchAgentDailyCollection(String agentId, DateTime date) async {
+    try {
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+      final response = await _supabase
+          .from('payments')
+          .select('amount_paid')
+          .eq('agent_id', agentId)
+          .gte('timestamp', startOfDay.toIso8601String())
+          .lte('timestamp', endOfDay.toIso8601String());
+
+      if (response is List && response.isEmpty) {
+        return 0.0;
+      }
+
+      final total = (response as List)
+          .map((json) => (json['amount_paid'] as num).toDouble())
+          .fold<double>(0.0, (sum, amount) => sum + amount);
+
+      return total;
+    } catch (e) {
+      throw Exception('Failed to fetch agent daily collection: $e');
+    }
+  }
+
+  /// Fetch agent's payments for a specific date with product details (Point 6)
+  Future<List<Payment>> fetchAgentDailyPayments(String agentId, DateTime date) async {
+    try {
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+      final response = await _supabase
+          .from('payments')
+          .select('''
+            *,
+            customers!inner(full_name, products!inner(name))
+          ''')
+          .eq('agent_id', agentId)
+          .gte('timestamp', startOfDay.toIso8601String())
+          .lte('timestamp', endOfDay.toIso8601String())
+          .order('timestamp', ascending: false);
+
+      return (response as List)
+          .map((json) {
+            final payment = Map<String, dynamic>.from(json as Map<String, dynamic>);
+            if (payment['customers'] != null) {
+              payment['customer_name'] = payment['customers']['full_name'];
+              if (payment['customers']['products'] != null) {
+                payment['product_name'] = payment['customers']['products']['name'];
+              }
+            }
+            return Payment.fromJson(payment);
+          })
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch agent daily payments: $e');
+    }
+  }
+
+  /// Create a payment edit request (Point 8)
+  Future<void> createPaymentEditRequest({
+    required String paymentId,
+    required String agentId,
+    required double originalAmount,
+    required double newAmount,
+    required String reason,
+  }) async {
+    try {
+      await _supabase.from('payment_edit_requests').insert({
+        'payment_id': paymentId,
+        'agent_id': agentId,
+        'original_amount': originalAmount,
+        'new_amount': newAmount,
+        'reason': reason,
+        'status': 'pending',
+      });
+    } catch (e) {
+      throw Exception('Failed to create payment edit request: $e');
+    }
+  }
 }

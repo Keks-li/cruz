@@ -71,3 +71,28 @@ final dashboardStatsProvider = FutureProvider<Map<String, double>>((ref) async {
     'registrationIncome': registrationIncome,
   };
 });
+
+/// Provider for product active customer counts (Point 5)
+final productCustomerCountsProvider = FutureProvider<Map<int, int>>((ref) async {
+  final customerProductRepo = ref.watch(customerProductRepositoryProvider);
+  return await customerProductRepo.getAllProductCustomerCounts();
+});
+
+/// Provider for a specific agent's daily collection (Point 9)
+final agentDailyCollectionForAdminProvider = FutureProvider.family<double, ({String agentId, DateTime date})>((ref, params) async {
+  final paymentRepo = ref.watch(paymentRepositoryProvider);
+  return await paymentRepo.fetchAgentDailyCollection(params.agentId, params.date);
+});
+
+/// Provider for a specific agent's daily payments (Point 9)
+final agentDailyPaymentsForAdminProvider = FutureProvider.family<List<Payment>, ({String agentId, DateTime date})>((ref, params) async {
+  final paymentRepo = ref.watch(paymentRepositoryProvider);
+  return await paymentRepo.fetchAgentDailyPayments(params.agentId, params.date);
+});
+
+/// Provider for a specific agent's customer count (Point 9)
+final agentCustomerCountForAdminProvider = FutureProvider.family<int, String>((ref, agentId) async {
+  final customerRepo = ref.watch(customerRepositoryProvider);
+  final customers = await customerRepo.fetchCustomersByAgent(agentId);
+  return customers.length;
+});

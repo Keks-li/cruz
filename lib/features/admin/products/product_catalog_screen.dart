@@ -70,6 +70,13 @@ class ProductCatalogScreen extends ConsumerWidget {
                         separatorBuilder: (_, __) => const SizedBox(height: 16),
                         itemBuilder: (context, index) {
                           final product = products[index];
+                          final customerCountsAsync = ref.watch(productCustomerCountsProvider);
+                          final customerCount = customerCountsAsync.when(
+                            data: (counts) => counts[product.id] ?? 0,
+                            loading: () => 0,
+                            error: (_, __) => 0,
+                          );
+                          
                           return Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -81,23 +88,70 @@ class ProductCatalogScreen extends ConsumerWidget {
                               padding: const EdgeInsets.all(16),
                               child: Row(
                                 children: [
-                                  Container(
-                                    height: 52,
-                                    width: 52,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.adminPrimaryColor.withOpacity(0.05),
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    child: const Icon(Icons.inventory_2_rounded, color: AppTheme.adminPrimaryColor),
+                                  Stack(
+                                    children: [
+                                      Container(
+                                        height: 52,
+                                        width: 52,
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.adminPrimaryColor.withOpacity(0.05),
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                        child: const Icon(Icons.inventory_2_rounded, color: AppTheme.adminPrimaryColor),
+                                      ),
+                                      // Customer count badge (Point 5)
+                                      if (customerCount > 0)
+                                        Positioned(
+                                          top: -4,
+                                          right: -4,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.adminAccentRevenue,
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              '$customerCount',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          product.name,
-                                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.adminTextColor),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                product.name,
+                                                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: AppTheme.adminTextColor),
+                                              ),
+                                            ),
+                                            // Customer count text label
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.adminAccentRevenue.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                '$customerCount customers',
+                                                style: const TextStyle(
+                                                  color: AppTheme.adminAccentRevenue,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                         const SizedBox(height: 4),
                                         Text(

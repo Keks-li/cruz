@@ -1,86 +1,147 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme.dart';
-import '../../../core/providers.dart';
-import '../../../providers/agent_providers.dart';
-import '../../auth/login_screen.dart';
-import '../customers/lookup_client_screen.dart';
-import '../registration/new_registration_screen.dart';
-import '../ledger/collection_ledger_screen.dart';
+import '../../../providers/admin_providers.dart';
+import '../../../data/models/profile.dart';
+import '../../../data/models/payment.dart';
 
-class AgentDashboardScreen extends ConsumerWidget {
-  const AgentDashboardScreen({super.key});
+/// Selected date provider for admin agent profile view
+final adminAgentSelectedDateProvider = StateProvider.family<DateTime, String>((ref, agentId) {
+  return DateTime.now();
+});
+
+class AgentProfileScreen extends ConsumerWidget {
+  final Profile agent;
+
+  const AgentProfileScreen({super.key, required this.agent});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dailyCollectionAsync = ref.watch(agentDailyCollectionProvider);
-    final customerCountAsync = ref.watch(agentCustomerCountProvider);
-    final dailyPaymentsAsync = ref.watch(agentDailyPaymentsProvider);
-    final selectedDate = ref.watch(agentSelectedDateProvider);
+    final selectedDate = ref.watch(adminAgentSelectedDateProvider(agent.id));
+    final dailyCollectionAsync = ref.watch(
+      agentDailyCollectionForAdminProvider((agentId: agent.id, date: selectedDate)),
+    );
+    final dailyPaymentsAsync = ref.watch(
+      agentDailyPaymentsForAdminProvider((agentId: agent.id, date: selectedDate)),
+    );
+    final customerCountAsync = ref.watch(
+      agentCustomerCountForAdminProvider(agent.id),
+    );
 
     return Scaffold(
-      backgroundColor: AppTheme.agentBackgroundColor,
+      backgroundColor: AppTheme.adminBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.adminTextColor),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text(
-          'Agent Dashboard',
+          'Agent Profile',
           style: TextStyle(
-            color: AppTheme.agentTextColor,
-            fontWeight: FontWeight.w700,
-            fontSize: 20,
+            color: AppTheme.adminTextColor,
+            fontWeight: FontWeight.w800,
           ),
         ),
-        centerTitle: false,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: AppTheme.dangerColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.logout_rounded, color: AppTheme.dangerColor, size: 22),
-              onPressed: () async {
-                await ref.read(authRepositoryProvider).signOut();
-                if (context.mounted) {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  );
-                }
-              },
-            ),
-          ),
-        ],
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero Card - Today's Collection with Date Picker
-            _buildDailyCollectionCard(
-              context,
-              ref,
-              dailyCollectionAsync,
-              customerCountAsync,
-              selectedDate,
-            ),
-            const SizedBox(height: 24),
-            
-            // Total Registered Customers Card (Point 6)
-            _buildCustomerCountCard(customerCountAsync),
+            // Agent Info Card
+            _buildAgentInfoCard(context),
             const SizedBox(height: 24),
 
-            // Action Grid
-            _buildActionGrid(context),
+            // Daily Collection Card with Date Picker (Point 9)
+            _buildDailyCollectionCard(context, ref, selectedDate, dailyCollectionAsync),
+            const SizedBox(height: 16),
+
+            // Customer Count Card
+            _buildCustomerCountCard(customerCountAsync),
             const SizedBox(height: 32),
 
-            // Collections History for Selected Date (Point 6)
-            _buildCollectionsHistorySection(context, ref, dailyPaymentsAsync, selectedDate),
+            // Collections History for Selected Date
+            _buildCollectionsHistorySection(ref, dailyPaymentsAsync, selectedDate),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAgentInfoCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Row(
+        children: [
+          Container(
+            height: 64,
+            width: 64,
+            decoration: BoxDecoration(
+              color: agent.isActive
+                  ? AppTheme.adminAccentRevenue.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.person_rounded,
+              color: agent.isActive ? AppTheme.adminAccentRevenue : Colors.grey.shade400,
+              size: 32,
+            ),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  agent.fullName ?? 'Agent',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.adminTextColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  agent.email ?? 'No email',
+                  style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: agent.isActive
+                        ? AppTheme.adminAccentRevenue.withOpacity(0.1)
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    agent.isActive ? 'ACTIVE' : 'INACTIVE',
+                    style: TextStyle(
+                      color: agent.isActive ? AppTheme.adminAccentRevenue : Colors.grey.shade600,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -88,15 +149,14 @@ class AgentDashboardScreen extends ConsumerWidget {
   Widget _buildDailyCollectionCard(
     BuildContext context,
     WidgetRef ref,
-    AsyncValue<double> dailyCollectionAsync,
-    AsyncValue<int> customerCountAsync,
     DateTime selectedDate,
+    AsyncValue<double> dailyCollectionAsync,
   ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppTheme.agentPrimaryColor,
+        color: AppTheme.adminPrimaryColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: AppTheme.cardShadow,
       ),
@@ -107,10 +167,10 @@ class AgentDashboardScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                "TODAY'S COLLECTION",
+                "TOTAL COLLECTED",
                 style: TextStyle(
                   color: Colors.white70,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.5,
                 ),
@@ -162,19 +222,6 @@ class AgentDashboardScreen extends ConsumerWidget {
               style: TextStyle(color: Colors.white70),
             ),
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              customerCountAsync.when(
-                data: (count) => _buildMetricChip(
-                  Icons.people_alt_rounded,
-                  '$count Customers',
-                ),
-                loading: () => _buildMetricChip(Icons.people_alt_rounded, '...'),
-                error: (_, __) => _buildMetricChip(Icons.people_alt_rounded, 'Error'),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -195,12 +242,12 @@ class AgentDashboardScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppTheme.agentAccentRegister.withOpacity(0.1),
+              color: AppTheme.adminPrimaryColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
               Icons.group_rounded,
-              color: AppTheme.agentAccentRegister,
+              color: AppTheme.adminPrimaryColor,
               size: 28,
             ),
           ),
@@ -210,7 +257,7 @@ class AgentDashboardScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'TOTAL REGISTERED CUSTOMERS',
+                  'TOTAL CUSTOMERS REGISTERED',
                   style: TextStyle(
                     color: Colors.grey.shade500,
                     fontSize: 11,
@@ -225,7 +272,7 @@ class AgentDashboardScreen extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.agentTextColor,
+                      color: AppTheme.adminTextColor,
                     ),
                   ),
                   loading: () => const SizedBox(
@@ -243,86 +290,9 @@ class AgentDashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMetricChip(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.white, size: 14),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionGrid(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionCard(
-                context,
-                'Customers',
-                Icons.people_rounded,
-                AppTheme.agentPrimaryColor,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const LookupClientScreen()),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildActionCard(
-                context,
-                'Register New',
-                Icons.person_add_rounded,
-                AppTheme.agentAccentRegister,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const NewRegistrationScreen()),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildActionCard(
-          context,
-          'Collection Ledger',
-          Icons.receipt_long_rounded,
-          AppTheme.agentAccentSync,
-          isFullWidth: true,
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const CollectionLedgerScreen()),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
   Widget _buildCollectionsHistorySection(
-    BuildContext context,
     WidgetRef ref,
-    AsyncValue<List<dynamic>> dailyPaymentsAsync,
+    AsyncValue<List<Payment>> dailyPaymentsAsync,
     DateTime selectedDate,
   ) {
     return Column(
@@ -386,7 +356,7 @@ class AgentDashboardScreen extends ConsumerWidget {
           loading: () => const Center(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 40),
-              child: CircularProgressIndicator(color: AppTheme.agentPrimaryColor),
+              child: CircularProgressIndicator(color: AppTheme.adminPrimaryColor),
             ),
           ),
           error: (error, _) => Center(
@@ -397,7 +367,7 @@ class AgentDashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPaymentHistoryItem(dynamic payment) {
+  Widget _buildPaymentHistoryItem(Payment payment) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -411,10 +381,10 @@ class AgentDashboardScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.agentPrimaryColor.withOpacity(0.1),
+              color: AppTheme.adminAccentRevenue.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.check_rounded, color: AppTheme.agentPrimaryColor, size: 20),
+            child: const Icon(Icons.check_rounded, color: AppTheme.adminAccentRevenue, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -422,16 +392,16 @@ class AgentDashboardScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  payment.productName ?? 'Product',
+                  payment.customerName ?? 'Customer',
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
-                    color: AppTheme.agentTextColor,
+                    color: AppTheme.adminTextColor,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  payment.customerName ?? 'Customer',
+                  payment.productName ?? 'Product',
                   style: TextStyle(
                     color: Colors.grey.shade500,
                     fontSize: 12,
@@ -447,7 +417,7 @@ class AgentDashboardScreen extends ConsumerWidget {
               Text(
                 'GHC ${payment.amountPaid.toStringAsFixed(0)}',
                 style: const TextStyle(
-                  color: AppTheme.agentPrimaryColor,
+                  color: AppTheme.adminAccentRevenue,
                   fontWeight: FontWeight.w800,
                   fontSize: 16,
                 ),
@@ -468,57 +438,6 @@ class AgentDashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionCard(
-    BuildContext context,
-    String label,
-    IconData icon,
-    Color accentColor, {
-    bool isFullWidth = false,
-    VoidCallback? onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200, width: 1),
-        boxShadow: AppTheme.cardShadow,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            width: isFullWidth ? double.infinity : null,
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, size: 32, color: accentColor),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: AppTheme.agentTextColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> _selectDate(BuildContext context, WidgetRef ref, DateTime currentDate) async {
     final picked = await showDatePicker(
       context: context,
@@ -529,10 +448,10 @@ class AgentDashboardScreen extends ConsumerWidget {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: AppTheme.agentPrimaryColor,
+              primary: AppTheme.adminPrimaryColor,
               onPrimary: Colors.white,
               surface: Colors.white,
-              onSurface: AppTheme.agentTextColor,
+              onSurface: AppTheme.adminTextColor,
             ),
           ),
           child: child!,
@@ -541,7 +460,7 @@ class AgentDashboardScreen extends ConsumerWidget {
     );
 
     if (picked != null) {
-      ref.read(agentSelectedDateProvider.notifier).state = picked;
+      ref.read(adminAgentSelectedDateProvider(agent.id).notifier).state = picked;
     }
   }
 

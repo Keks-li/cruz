@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/product_repository.dart';
 import '../data/repositories/customer_repository.dart';
+import '../data/repositories/customer_product_repository.dart';
 import '../data/repositories/payment_repository.dart';
 import '../data/repositories/agent_repository.dart';
 import '../data/repositories/zone_repository.dart';
@@ -47,4 +48,9 @@ final zoneRepositoryProvider = Provider<ZoneRepository>((ref) {
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   final supabase = ref.watch(supabaseClientProvider);
   return SettingsRepository(supabase);
+});
+
+final customerProductRepositoryProvider = Provider<CustomerProductRepository>((ref) {
+  final supabase = ref.watch(supabaseClientProvider);
+  return CustomerProductRepository(supabase);
 });

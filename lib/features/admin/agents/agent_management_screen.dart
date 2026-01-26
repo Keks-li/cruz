@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme.dart';
 import '../../../core/providers.dart';
 import '../../../providers/admin_providers.dart';
+import 'agent_profile_screen.dart';
 
 class AgentManagementScreen extends ConsumerWidget {
   const AgentManagementScreen({super.key});
@@ -77,7 +78,16 @@ class AgentManagementScreen extends ConsumerWidget {
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(12),
-                          child: ListTile(
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => AgentProfileScreen(agent: agent),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: ListTile(
                             leading: Container(
                               height: 52,
                               width: 52,
@@ -106,23 +116,50 @@ class AgentManagementScreen extends ConsumerWidget {
                                   style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w500),
                                 ),
                                 const SizedBox(height: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: agent.isActive 
-                                        ? AppTheme.adminAccentRevenue.withOpacity(0.1) 
-                                        : Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    agent.isActive ? 'ACTIVE' : 'INACTIVE',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: agent.isActive ? AppTheme.adminAccentRevenue : Colors.grey.shade600,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.5,
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: agent.isActive 
+                                            ? AppTheme.adminAccentRevenue.withOpacity(0.1) 
+                                            : Colors.grey.shade100,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        agent.isActive ? 'ACTIVE' : 'INACTIVE',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: agent.isActive ? AppTheme.adminAccentRevenue : Colors.grey.shade600,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.adminPrimaryColor.withOpacity(0.05),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.touch_app_rounded, size: 12, color: AppTheme.adminPrimaryColor),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'View Profile',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: AppTheme.adminPrimaryColor,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -163,6 +200,7 @@ class AgentManagementScreen extends ConsumerWidget {
                                 }
                               },
                             ),
+                          ),
                           ),
                         ),
                       );
