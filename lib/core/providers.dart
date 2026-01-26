@@ -5,6 +5,7 @@ import '../data/repositories/product_repository.dart';
 import '../data/repositories/customer_repository.dart';
 import '../data/repositories/customer_product_repository.dart';
 import '../data/repositories/payment_repository.dart';
+import '../data/repositories/payment_edit_request_repository.dart';
 import '../data/repositories/agent_repository.dart';
 import '../data/repositories/zone_repository.dart';
 import '../data/repositories/settings_repository.dart';
@@ -53,4 +54,9 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
 final customerProductRepositoryProvider = Provider<CustomerProductRepository>((ref) {
   final supabase = ref.watch(supabaseClientProvider);
   return CustomerProductRepository(supabase);
+});
+
+final paymentEditRequestRepositoryProvider = Provider<PaymentEditRequestRepository>((ref) {
+  final supabase = ref.watch(supabaseClientProvider);
+  return PaymentEditRequestRepository(supabase);
 });

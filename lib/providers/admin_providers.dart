@@ -3,6 +3,7 @@ import '../core/providers.dart';
 import '../data/models/product.dart';
 import '../data/models/profile.dart';
 import '../data/models/payment.dart';
+import '../data/models/payment_edit_request.dart';
 import '../data/models/zone.dart';
 import '../data/models/customer.dart';
 
@@ -95,4 +96,16 @@ final agentCustomerCountForAdminProvider = FutureProvider.family<int, String>((r
   final customerRepo = ref.watch(customerRepositoryProvider);
   final customers = await customerRepo.fetchCustomersByAgent(agentId);
   return customers.length;
+});
+
+/// Provider for pending payment edit requests (admin approval)
+final pendingEditRequestsProvider = FutureProvider<List<PaymentEditRequest>>((ref) async {
+  final requestRepo = ref.watch(paymentEditRequestRepositoryProvider);
+  return await requestRepo.fetchPendingRequests();
+});
+
+/// Provider for all payment edit requests (history)
+final allEditRequestsProvider = FutureProvider<List<PaymentEditRequest>>((ref) async {
+  final requestRepo = ref.watch(paymentEditRequestRepositoryProvider);
+  return await requestRepo.fetchAllRequests();
 });

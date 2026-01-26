@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme.dart';
 import '../../../core/providers.dart';
 import '../../../providers/admin_providers.dart';
+import 'product_detail_screen.dart';
 
 class ProductCatalogScreen extends ConsumerWidget {
   const ProductCatalogScreen({super.key});
@@ -77,7 +78,16 @@ class ProductCatalogScreen extends ConsumerWidget {
                             error: (_, __) => 0,
                           );
                           
-                          return Container(
+                          return InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ProductDetailScreen(product: product),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(20),
@@ -186,6 +196,7 @@ class ProductCatalogScreen extends ConsumerWidget {
                                 ],
                               ),
                             ),
+                          ),
                           );
                         },
                       ),

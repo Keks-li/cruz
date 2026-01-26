@@ -45,6 +45,28 @@ final agentStatsProvider = FutureProvider<Map<String, double>>((ref) async {
   return {'money': money, 'boxes': boxes};
 });
 
+/// Provider for agent's registration stats (count and total fees)
+final agentRegistrationStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final currentUser = await ref.watch(currentUserProvider.future);
+  if (currentUser == null) return {'count': 0, 'totalFees': 0.0};
+  
+  final supabase = ref.watch(supabaseClientProvider);
+  
+  // Fetch registration fee data for customers registered by this agent
+  final response = await supabase
+      .from('customers')
+      .select('registration_fee_paid')
+      .eq('agent_id', currentUser.id);
+  
+  final customers = response as List;
+  final count = customers.length;
+  final totalFees = customers
+      .map((c) => (c['registration_fee_paid'] as num?)?.toDouble() ?? 0.0)
+      .fold<double>(0.0, (sum, fee) => sum + fee);
+  
+  return {'count': count, 'totalFees': totalFees};
+});
+
 /// Provider for agent's payment history
 final agentPaymentsProvider = FutureProvider<List<Payment>>((ref) async {
   final currentUser = await ref.watch(currentUserProvider.future);
@@ -82,7 +104,14 @@ final agentProductsProvider = FutureProvider<List<Product>>((ref) async {
 });
 
 /// Provider for settings (for registration fee)
-final settingsProvider = FutureProvider((ref) async {
+final settingsProvider = FutureProvider<({double registrationFee})>((ref) async {
   final settingsRepo = ref.watch(settingsRepositoryProvider);
-  return await settingsRepo.getSettings();
+  final fee = await settingsRepo.getRegistrationFee();
+  return (registrationFee: fee);
+});
+
+/// Provider for fetching products assigned to a specific customer
+final customerProductsProvider = FutureProvider.family((ref, String customerId) async {
+  final customerProductRepo = ref.watch(customerProductRepositoryProvider);
+  return await customerProductRepo.fetchProductsByCustomer(customerId);
 });
