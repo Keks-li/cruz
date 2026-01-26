@@ -17,6 +17,7 @@ class AgentDashboardScreen extends ConsumerWidget {
     final customerCountAsync = ref.watch(agentCustomerCountProvider);
     final dailyPaymentsAsync = ref.watch(agentDailyPaymentsProvider);
     final selectedDate = ref.watch(agentSelectedDateProvider);
+    final registrationStatsAsync = ref.watch(agentRegistrationStatsProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.agentBackgroundColor,
@@ -71,6 +72,10 @@ class AgentDashboardScreen extends ConsumerWidget {
             
             // Total Registered Customers Card (Point 6)
             _buildCustomerCountCard(customerCountAsync),
+            const SizedBox(height: 16),
+
+            // Registration Stats Card (NEW - shows total registrations and fees)
+            _buildRegistrationStatsCard(registrationStatsAsync),
             const SizedBox(height: 24),
 
             // Action Grid
