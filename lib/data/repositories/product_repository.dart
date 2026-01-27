@@ -138,7 +138,8 @@ class ProductRepository {
       // 4. Update each customer
       for (final customerData in customers) {
         final customerId = customerData['id'] as String;
-        final currentTotalBoxes = customerData['total_boxes_assigned'] as int;
+        final rawTotalBoxes = customerData['total_boxes_assigned'];
+        final currentTotalBoxes = rawTotalBoxes is int ? rawTotalBoxes : int.tryParse(rawTotalBoxes.toString()) ?? 0;
         final currentBalanceDue = (customerData['balance_due'] as num).toDouble();
         
         await _supabase

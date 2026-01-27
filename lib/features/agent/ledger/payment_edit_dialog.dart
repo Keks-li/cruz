@@ -213,7 +213,7 @@ class _PaymentEditDialogState extends State<PaymentEditDialog> {
       Navigator.pop(context, {
         'paymentId': widget.payment.id,
         'originalAmount': widget.payment.amountPaid,
-        'newAmount': double.parse(_amountController.text),
+        'newAmount': double.tryParse(_amountController.text) ?? 0.0,
         'reason': _reasonController.text.trim(),
       });
     } catch (e) {

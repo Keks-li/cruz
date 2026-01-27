@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme.dart';
+import '../../../providers/admin_providers.dart';
 import '../agents/agent_management_screen.dart';
 import '../dashboard/admin_dashboard_screen.dart';
 import '../products/product_catalog_screen.dart';
 import '../settings/system_settings_screen.dart';
 import '../customers/customer_list_screen.dart';
 
-class AdminNavShell extends StatefulWidget {
+class AdminNavShell extends ConsumerStatefulWidget {
   const AdminNavShell({super.key});
 
   @override
-  State<AdminNavShell> createState() => _AdminNavShellState();
+  ConsumerState<AdminNavShell> createState() => _AdminNavShellState();
 }
 
-class _AdminNavShellState extends State<AdminNavShell> {
+class _AdminNavShellState extends ConsumerState<AdminNavShell> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
@@ -23,6 +25,33 @@ class _AdminNavShellState extends State<AdminNavShell> {
     const ProductCatalogScreen(),
     const SystemSettingsScreen(),
   ];
+
+  void _onItemTapped(int index) {
+    if (_selectedIndex == index) return;
+    
+    setState(() => _selectedIndex = index);
+
+    // Force refresh data when switching tabs to ensure freshness
+    switch (index) {
+      case 0: // Stats/Dashboard
+        ref.invalidate(dashboardStatsProvider);
+        break;
+      case 1: // Customers
+        ref.invalidate(allCustomersProvider);
+        break;
+      case 2: // Agents
+        ref.invalidate(agentsListProvider);
+        ref.invalidate(pendingEditRequestsProvider); // Also refresh pending requests if shown in this flow
+        break;
+      case 3: // Products
+        ref.invalidate(productsListProvider);
+        break; 
+      case 4: // Settings
+        // Settings usually static or have specific streams, but good to refresh if needed
+        ref.invalidate(zonesListProvider);
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +70,7 @@ class _AdminNavShellState extends State<AdminNavShell> {
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          onTap: (index) => setState(() => _selectedIndex = index),
+          onTap: _onItemTapped,
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
           elevation: 0,

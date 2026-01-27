@@ -10,8 +10,10 @@ class Zone {
   });
 
   factory Zone.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : int.parse(rawId.toString());
     return Zone(
-      id: json['id'] as int,
+      id: id,
       name: json['name'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
     );

@@ -15,12 +15,25 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
+    // Helper to safely parse int from either int or String
+    int parseIntOrZero(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      return int.tryParse(value.toString()) ?? 0;
+    }
+
+    double parseDoubleOrZero(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is num) return value.toDouble();
+      return double.tryParse(value.toString()) ?? 0.0;
+    }
+
     return Product(
-      id: json['id'] as int,
+      id: parseIntOrZero(json['id']),
       name: json['name'] as String,
-      boxRate: (json['box_rate'] as num).toDouble(),
-      totalBoxes: json['total_boxes'] as int,
-      totalPrice: (json['total_price'] as num).toDouble(),
+      boxRate: parseDoubleOrZero(json['box_rate']),
+      totalBoxes: parseIntOrZero(json['total_boxes']),
+      totalPrice: parseDoubleOrZero(json['total_price']),
     );
   }
 

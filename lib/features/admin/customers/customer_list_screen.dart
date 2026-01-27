@@ -5,6 +5,7 @@ import '../../../core/providers.dart';
 import '../../../providers/admin_providers.dart';
 import '../../../data/models/customer.dart';
 import '../../../data/models/payment.dart';
+import '../../../data/models/customer_product.dart';
 
 class CustomerListScreen extends ConsumerStatefulWidget {
   const CustomerListScreen({super.key});
@@ -163,7 +164,35 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text('Error: $error')),
+              error: (error, stack) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline_rounded, color: Colors.grey, size: 48),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Failed to load customers',
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Please check your connection',
+                      style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () => ref.invalidate(allCustomersProvider),
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Retry'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.adminPrimaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -225,16 +254,26 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
 
         return FutureBuilder(
           future: Future.wait([
-            ref.read(productRepositoryProvider).getProductById(customer.productId),
+            (customer.productId != '0' && customer.productId != 'null') 
+                ? ref.read(productRepositoryProvider).getProductById(customer.productId)
+                : Future.value(null),
             ref.read(paymentRepositoryProvider).fetchPaymentsByCustomer(widget.customerId),
+            ref.read(customerProductRepositoryProvider).fetchProductsByCustomer(widget.customerId),
           ]),
           builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
+            if (snapshot.hasError) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('Error')), 
+                body: Center(child: Text('Error: ${snapshot.error}'))
+              );
+            }
             if (!snapshot.hasData) {
               return const Scaffold(body: Center(child: CircularProgressIndicator()));
             }
 
             final product = snapshot.data![0];
             final allPayments = snapshot.data![1] as List<Payment>;
+            final customerProducts = snapshot.data![2] as List<CustomerProduct>;
             
             // Filter payments by date range
             final payments = _startDate != null && _endDate != null
@@ -364,6 +403,164 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                     ),
                     const SizedBox(height: 24),
 
+                    // Products Section
+                    const Text(
+                      'ASSIGNED PRODUCTS',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    FutureBuilder(
+                      future: ref.read(customerProductRepositoryProvider).fetchProductsByCustomer(widget.customerId),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+
+                        final customerProducts = snapshot.data!;
+
+                        if (customerProducts.isEmpty) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              child: Text(
+                                'No products assigned',
+                                style: TextStyle(color: Colors.grey.shade400),
+                              ),
+                            ),
+                          );
+                        }
+
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: customerProducts.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final cp = customerProducts[index];
+                            final isActive = cp.isActive;
+
+                            return Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isActive ? Colors.grey.shade200 : AppTheme.dangerColor.withOpacity(0.3),
+                                ),
+                                boxShadow: AppTheme.cardShadow,
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: isActive 
+                                          ? AppTheme.adminAccentRevenue.withOpacity(0.1)
+                                          : Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      Icons.inventory_2_rounded,
+                                      color: isActive ? AppTheme.adminAccentRevenue : Colors.grey.shade400,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          cp.productName ?? 'Unknown Product',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 15,
+                                            color: isActive ? AppTheme.adminTextColor : Colors.grey.shade500,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              '${cp.boxesPaid}/${cp.boxesAssigned} boxes',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey.shade500,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: isActive 
+                                                    ? AppTheme.adminAccentRevenue.withOpacity(0.1)
+                                                    : AppTheme.dangerColor.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                isActive ? 'ACTIVE' : 'TERMINATED',
+                                                style: TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: isActive ? AppTheme.adminAccentRevenue : AppTheme.dangerColor,
+                                                  letterSpacing: 0.5,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Switch(
+                                    value: isActive,
+                                    onChanged: (value) async {
+                                      try {
+                                        await ref.read(customerProductRepositoryProvider).toggleProductActive(cp.id, value);
+                                        
+                                        // Refresh the screen
+                                        setState(() {});
+                                        
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Product ${value ? "activated" : "deactivated"}',
+                                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                              ),
+                                              backgroundColor: value ? AppTheme.adminAccentRevenue : AppTheme.dangerColor,
+                                              behavior: SnackBarBehavior.floating,
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error: $e'),
+                                              backgroundColor: AppTheme.dangerColor,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                                    activeColor: AppTheme.adminAccentRevenue,
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
                     const Text(
                       'PORTFOLIO STATUS',
                       style: TextStyle(
@@ -374,91 +571,206 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: AppTheme.cardShadow,
-                        border: Border.all(color: Colors.grey.shade100),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    // Show all products from customer_products table
+                    if (customerProducts.isNotEmpty)
+                      ...customerProducts.map((cp) {
+                        final cpBoxesLeft = cp.boxesAssigned - cp.boxesPaid;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: AppTheme.cardShadow,
+                            border: Border.all(color: cp.isActive ? Colors.grey.shade100 : AppTheme.dangerColor.withOpacity(0.3)),
+                          ),
+                          child: Column(
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    product?.name ?? 'Unknown',
-                                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            cp.productName ?? 'Product ${cp.productId}',
+                                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: cp.isActive ? AppTheme.adminTextColor : Colors.grey),
+                                          ),
+                                          if (!cp.isActive) ...[
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.dangerColor.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: const Text(
+                                                'TERMINATED',
+                                                style: TextStyle(
+                                                  color: AppTheme.dangerColor,
+                                                  fontWeight: FontWeight.w800,
+                                                  fontSize: 9,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'GHC ${cp.pricePerBox?.toStringAsFixed(0) ?? '0'} / box • ${cp.boxesAssigned} Boxes',
+                                        style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w600, fontSize: 13),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'GHC ${product?.boxRate.toStringAsFixed(0)} / box • ${customer.totalBoxesAssigned} Boxes',
-                                    style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w600, fontSize: 13),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        'GHC ${cp.totalPrice?.toStringAsFixed(0) ?? '0'}',
+                                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 20),
+                                child: Divider(height: 1),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    'GHC ${product?.totalPrice.toStringAsFixed(0)}',
-                                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'OUTSTANDING',
+                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 1),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'GHC ${cp.balanceDue.toStringAsFixed(0)}',
+                                        style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppTheme.adminAccentAlert),
+                                      ),
+                                    ],
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.adminAccentAlert.withOpacity(0.05),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Text(
+                                      '$cpBoxesLeft BOXES LEFT',
+                                      style: const TextStyle(color: AppTheme.adminAccentAlert, fontWeight: FontWeight.w900, fontSize: 12),
+                                    ),
                                   ),
                                 ],
+                              ),
+                              const SizedBox(height: 20),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: LinearProgressIndicator(
+                                  value: cp.boxesAssigned > 0 ? (cp.boxesPaid / cp.boxesAssigned) : 0,
+                                  minHeight: 10,
+                                  backgroundColor: Colors.grey.shade100,
+                                  valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.adminAccentRevenue),
+                                ),
                               ),
                             ],
                           ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 20),
-                            child: Divider(height: 1),
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'OUTSTANDING',
-                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 1),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'GHC ${customer.balanceDue.toStringAsFixed(0)}',
-                                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppTheme.adminAccentAlert),
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.adminAccentAlert.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(16),
+                        );
+                      }).toList()
+                    else
+                      // Fallback to legacy single product display
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: AppTheme.cardShadow,
+                          border: Border.all(color: Colors.grey.shade100),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      product?.name ?? 'Unknown',
+                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'GHC ${product?.boxRate.toStringAsFixed(0)} / box • ${customer.totalBoxesAssigned} Boxes',
+                                      style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w600, fontSize: 13),
+                                    ),
+                                  ],
                                 ),
-                                child: Text(
-                                  '$boxesLeft BOXES LEFT',
-                                  style: const TextStyle(color: AppTheme.adminAccentAlert, fontWeight: FontWeight.w900, fontSize: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      'GHC ${product?.totalPrice.toStringAsFixed(0)}',
+                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: LinearProgressIndicator(
-                              value: customer.totalBoxesAssigned > 0 ? (customer.boxesPaid / customer.totalBoxesAssigned) : 0,
-                              minHeight: 10,
-                              backgroundColor: Colors.grey.shade100,
-                              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.adminAccentRevenue),
+                              ],
                             ),
-                          ),
-                        ],
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20),
+                              child: Divider(height: 1),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'OUTSTANDING',
+                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 1),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'GHC ${customer.balanceDue.toStringAsFixed(0)}',
+                                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppTheme.adminAccentAlert),
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.adminAccentAlert.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Text(
+                                    '$boxesLeft BOXES LEFT',
+                                    style: const TextStyle(color: AppTheme.adminAccentAlert, fontWeight: FontWeight.w900, fontSize: 12),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: LinearProgressIndicator(
+                                value: customer.totalBoxesAssigned > 0 ? (customer.boxesPaid / customer.totalBoxesAssigned) : 0,
+                                minHeight: 10,
+                                backgroundColor: Colors.grey.shade100,
+                                valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.adminAccentRevenue),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 24),
 
                     const SizedBox(height: 32),

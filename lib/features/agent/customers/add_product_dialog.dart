@@ -24,6 +24,7 @@ class _AddProductToCustomerDialogState extends ConsumerState<AddProductToCustome
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(agentProductsProvider);
+    final customerProductsAsync = ref.watch(customerProductsProvider(widget.customer.id));
     final settingsAsync = ref.watch(settingsProvider);
 
     return AlertDialog(
@@ -69,12 +70,17 @@ class _AddProductToCustomerDialogState extends ConsumerState<AddProductToCustome
             ),
           ),
           const SizedBox(height: 8),
-          productsAsync.when(
-            data: (products) {
-              // Filter out products customer already has
-              final availableProducts = products.where((p) => 
-                p.id != widget.customer.productId
-              ).toList();
+          customerProductsAsync.when(
+            data: (customerProducts) {
+              // Get list of product IDs already assigned to this customer
+              final assignedProductIds = customerProducts.map((cp) => cp.productId).toSet();
+              
+              return productsAsync.when(
+                data: (products) {
+                  // Filter out products customer already has
+                  final availableProducts = products.where((p) => 
+                    !assignedProductIds.contains(p.id)
+                  ).toList();
 
               if (availableProducts.isEmpty) {
                 return Container(
@@ -131,11 +137,15 @@ class _AddProductToCustomerDialogState extends ConsumerState<AddProductToCustome
                     });
                   },
                 ),
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Text('Error: $error'),
-          ),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Text('Error loading products: $error'),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Text('Error loading customer products: $error'),
+        ),
           if (_selectedProduct != null) ...[
             const SizedBox(height: 20),
             Container(
@@ -272,8 +282,9 @@ class _AddProductToCustomerDialogState extends ConsumerState<AddProductToCustome
         registrationFeePaid: regFee,
       );
 
-      // Refresh customer data
+      // Refresh customer data and customer products
       ref.invalidate(assignedCustomersProvider);
+      ref.invalidate(customerProductsProvider(widget.customer.id));
 
       if (mounted) {
         Navigator.pop(context, true);

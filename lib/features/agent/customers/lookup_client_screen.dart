@@ -223,6 +223,8 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                               ref.invalidate(assignedCustomersProvider);
                               ref.invalidate(agentPaymentsProvider);
                               ref.invalidate(agentStatsProvider);
+                              ref.invalidate(agentDailyCollectionProvider);
+                              ref.invalidate(agentDailyPaymentsProvider);
 
                               if (dialogContext.mounted) {
                                 Navigator.of(dialogContext).pop();
@@ -515,15 +517,33 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
             customerProductsAsync.when(
               data: (customerProducts) {
                 if (customerProducts.isEmpty) {
-                  // Fall back to legacy single product display
-                  return _buildProductRow(
-                    productName: customer.productName ?? 'Unknown',
-                    boxesAssigned: customer.totalBoxesAssigned,
-                    boxesPaid: customer.boxesPaid,
-                    boxRate: 0, // Will be fetched when collect is tapped
-                    customerId: customer.id,
-                    productId: customer.productId,
-                    isLegacy: true,
+                  // Show 'No products assigned' message
+                  return Container(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    alignment: Alignment.center,
+                    child: Column(
+                      children: [
+                        Icon(Icons.inventory_2_outlined, size: 28, color: Colors.grey.shade300),
+                        const SizedBox(height: 8),
+                        Text(
+                          'No products assigned yet',
+                          style: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Tap "ADD" above to assign products',
+                          style: TextStyle(
+                            color: AppTheme.agentAccentRegister,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 }
                 
@@ -540,6 +560,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                       productId: cp.productId,
                       customerProductId: cp.id,
                       isLegacy: false,
+                      isActive: cp.isActive,
                     );
                   }).toList(),
                 );
@@ -554,14 +575,9 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                   ),
                 ),
               ),
-              error: (_, __) => _buildProductRow(
-                productName: customer.productName ?? 'Unknown',
-                boxesAssigned: customer.totalBoxesAssigned,
-                boxesPaid: customer.boxesPaid,
-                boxRate: 0,
-                customerId: customer.id,
-                productId: customer.productId,
-                isLegacy: true,
+              error: (_, __) => Container(
+                padding: const EdgeInsets.all(16),
+                child: const Text('Error loading products', style: TextStyle(color: AppTheme.dangerColor)),
               ),
             ),
           ],
@@ -576,9 +592,10 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
     required int boxesPaid,
     required double boxRate,
     required String customerId,
-    required int productId,
+    required dynamic productId, // Can be int or String
     String? customerProductId,
     required bool isLegacy,
+    bool isActive = true,
   }) {
     final boxesRemaining = boxesAssigned - boxesPaid;
     
@@ -586,32 +603,59 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.agentInputFill,
+        color: isActive ? AppTheme.agentInputFill : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: isActive ? Colors.grey.shade200 : AppTheme.dangerColor.withOpacity(0.3)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppTheme.agentPrimaryColor.withOpacity(0.1),
+              color: isActive ? AppTheme.agentPrimaryColor.withOpacity(0.1) : Colors.grey.shade200,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.inventory_2_rounded, color: AppTheme.agentPrimaryColor, size: 20),
+            child: Icon(
+              Icons.inventory_2_rounded, 
+              color: isActive ? AppTheme.agentPrimaryColor : Colors.grey.shade400,
+              size: 20
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  productName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: AppTheme.agentTextColor,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      productName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: isActive ? AppTheme.agentTextColor : Colors.grey.shade500,
+                      ),
+                    ),
+                    if (!isActive) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.dangerColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'TERMINATED',
+                          style: TextStyle(
+                            color: AppTheme.dangerColor,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 9,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -625,7 +669,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
               ],
             ),
           ),
-          if (boxesRemaining > 0)
+          if (boxesRemaining > 0 && isActive)
             InkWell(
               onTap: () async {
                 if (isLegacy) {
@@ -644,7 +688,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                     );
                   }
                 } else {
-                  // Use new customer_products method
+                  // Use new customer_products method  
                   _showCollectDialogForProduct(
                     customerId: customerId,
                     productName: productName,
@@ -652,6 +696,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                     boxesAssigned: boxesAssigned,
                     boxesPaid: boxesPaid,
                     customerProductId: customerProductId!,
+                    productId: productId is int ? productId : int.parse(productId.toString()),
                   );
                 }
               },
@@ -671,7 +716,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                 ),
               ),
             )
-          else
+          else if (boxesRemaining == 0)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -682,6 +727,22 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                 'PAID',
                 style: TextStyle(
                   color: AppTheme.agentPrimaryColor,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                ),
+              ),
+            )
+          else // !isActive && boxesRemaining > 0
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'INACTIVE',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
                   fontWeight: FontWeight.w800,
                   fontSize: 11,
                 ),
@@ -699,6 +760,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
     required int boxesAssigned,
     required int boxesPaid,
     required String customerProductId,
+    required int productId,
   }) {
     int boxesToCollect = 1;
     int boxesRemaining = boxesAssigned - boxesPaid;
@@ -868,6 +930,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                                 agentId: currentUser.id,
                                 amount: totalToCollect,
                                 productBoxRate: boxRate,
+                                productId: productId, // NEW: Link payment to product
                               );
 
                               // Update customer_products table
@@ -882,6 +945,8 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                               ref.invalidate(customerProductsProvider(customerId));
                               ref.invalidate(agentPaymentsProvider);
                               ref.invalidate(agentStatsProvider);
+                              ref.invalidate(agentDailyCollectionProvider);
+                              ref.invalidate(agentDailyPaymentsProvider);
 
                               if (dialogContext.mounted) {
                                 Navigator.of(dialogContext).pop();

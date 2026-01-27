@@ -5,6 +5,7 @@ import '../../../core/theme.dart';
 import '../../../providers/admin_providers.dart';
 import 'widgets/revenue_card.dart';
 import 'widgets/stat_card.dart';
+import 'widgets/price_edit_approval_card.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -69,6 +70,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             padding: const EdgeInsets.all(20.0),
             child: Column(
               children: [
+                // Price Edit Approval Card
+                const PriceEditApprovalCard(),
                 RevenueCard(
                   title: 'TOTAL SYSTEM REVENUE',
                   value: 'GHC ${totalRevenue.toStringAsFixed(2)}',

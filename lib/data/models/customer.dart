@@ -36,17 +36,34 @@ class Customer {
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) {
+    // Helper to safely parse int from either int or String
+    int? parseIntOrNull(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      return int.tryParse(value.toString());
+    }
+    int parseIntOrZero(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      return int.tryParse(value.toString()) ?? 0;
+    }
+    double parseDoubleOrZero(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is num) return value.toDouble();
+      return double.tryParse(value.toString()) ?? 0.0;
+    }
+
     return Customer(
       id: json['id'] as String,
       fullName: json['full_name'] as String,
       phone: json['phone'] as String?,
-      zoneId: json['zone_id'] as int?,
-      productId: json['product_id'].toString(),
+      zoneId: parseIntOrNull(json['zone_id']),
+      productId: json['product_id']?.toString() ?? '0',
       assignedAgentId: json['assigned_agent_id'] as String?,
-      totalBoxesAssigned: json['total_boxes_assigned'] as int? ?? 0,
-      boxesPaid: json['boxes_paid'] as int? ?? 0,
-      balanceDue: (json['balance_due'] as num).toDouble(),
-      registrationFeePaid: (json['registration_fee_paid'] as num?)?.toDouble() ?? 0.0,
+      totalBoxesAssigned: parseIntOrZero(json['total_boxes_assigned']),
+      boxesPaid: parseIntOrZero(json['boxes_paid']),
+      balanceDue: parseDoubleOrZero(json['balance_due']),
+      registrationFeePaid: parseDoubleOrZero(json['registration_fee_paid']),
       isActive: json['is_active'] as bool? ?? true,
       createdAt: DateTime.parse(json['created_at'] as String),
       zoneName: json['zone_name'] as String?,

@@ -278,16 +278,29 @@ class ProductCatalogScreen extends ConsumerWidget {
 
                       setState(() => isLoading = true);
 
+                      final boxRate = double.tryParse(boxRateController.text);
+                      final totalBoxes = int.tryParse(totalBoxesController.text);
+
+                      if (boxRate == null || totalBoxes == null) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter valid numbers')),
+                          );
+                        }
+                        setState(() => isLoading = false);
+                        return;
+                      }
+
                       try {
                         final productRepo = ref.read(productRepositoryProvider);
                         await productRepo.createProduct(
                           name: nameController.text.trim(),
-                          boxRate: double.parse(boxRateController.text),
-                          totalBoxes: int.parse(totalBoxesController.text),
+                          boxRate: boxRate,
+                          totalBoxes: totalBoxes,
                         );
 
                         ref.invalidate(productsListProvider);
-                        Navigator.pop(dialogContext);
+                        if (context.mounted) Navigator.pop(dialogContext);
 
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -308,7 +321,9 @@ class ProductCatalogScreen extends ConsumerWidget {
                           );
                         }
                       } finally {
-                        setState(() => isLoading = false);
+                        if (context.mounted) {
+                          setState(() => isLoading = false);
+                        }
                       }
                     },
               style: ElevatedButton.styleFrom(
@@ -387,17 +402,30 @@ class ProductCatalogScreen extends ConsumerWidget {
                   : () async {
                       setState(() => isLoading = true);
 
+                      final boxRate = double.tryParse(boxRateController.text);
+                      final totalBoxes = int.tryParse(totalBoxesController.text);
+
+                      if (boxRate == null || totalBoxes == null) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter valid numbers')),
+                          );
+                        }
+                        setState(() => isLoading = false);
+                        return;
+                      }
+
                       try {
                         final productRepo = ref.read(productRepositoryProvider);
                         await productRepo.updateProduct(
                           id: product.id.toString(),
                           name: nameController.text.trim(),
-                          boxRate: double.parse(boxRateController.text),
-                          totalBoxes: int.parse(totalBoxesController.text),
+                          boxRate: boxRate,
+                          totalBoxes: totalBoxes,
                         );
 
                         ref.invalidate(productsListProvider);
-                        Navigator.pop(dialogContext);
+                        if (context.mounted) Navigator.pop(dialogContext);
 
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -418,7 +446,9 @@ class ProductCatalogScreen extends ConsumerWidget {
                           );
                         }
                       } finally {
-                        setState(() => isLoading = false);
+                        if (context.mounted) {
+                          setState(() => isLoading = false);
+                        }
                       }
                     },
               style: ElevatedButton.styleFrom(
@@ -543,7 +573,8 @@ class ProductCatalogScreen extends ConsumerWidget {
                             extraBoxes: extraBoxes,
                           );
                           
-                          final affectedCount = result['affectedCustomers'] as int;
+                          final rawCount = result['affectedCustomers'];
+                          final affectedCount = rawCount is int ? rawCount : int.tryParse(rawCount.toString()) ?? 0;
                           
                           ref.invalidate(productsListProvider);
                           Navigator.pop(dialogContext);

@@ -205,7 +205,13 @@ class _SystemSettingsScreenState extends ConsumerState<SystemSettingsScreen> {
                         }
 
                         try {
-                          final fee = double.parse(_regFeeController.text);
+                          final fee = double.tryParse(_regFeeController.text);
+                          if (fee == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please enter a valid number')),
+                            );
+                            return;
+                          }
                           await ref.read(settingsRepositoryProvider).setRegistrationFee(fee);
                           
                           if (mounted) {

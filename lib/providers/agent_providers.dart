@@ -12,7 +12,7 @@ final agentSelectedDateProvider = StateProvider<DateTime>((ref) {
 });
 
 /// Provider for agent's daily collection based on selected date (Point 6)
-final agentDailyCollectionProvider = FutureProvider<double>((ref) async {
+final agentDailyCollectionProvider = FutureProvider.autoDispose<double>((ref) async {
   final currentUser = await ref.watch(currentUserProvider.future);
   if (currentUser == null) return 0.0;
   
@@ -23,7 +23,7 @@ final agentDailyCollectionProvider = FutureProvider<double>((ref) async {
 });
 
 /// Provider for agent's daily payments list with product details (Point 6)
-final agentDailyPaymentsProvider = FutureProvider<List<Payment>>((ref) async {
+final agentDailyPaymentsProvider = FutureProvider.autoDispose<List<Payment>>((ref) async {
   final currentUser = await ref.watch(currentUserProvider.future);
   if (currentUser == null) return [];
   
@@ -34,7 +34,7 @@ final agentDailyPaymentsProvider = FutureProvider<List<Payment>>((ref) async {
 });
 
 /// Provider for agent's lifetime collection (money and boxes)
-final agentStatsProvider = FutureProvider<Map<String, double>>((ref) async {
+final agentStatsProvider = FutureProvider.autoDispose<Map<String, double>>((ref) async {
   final currentUser = await ref.watch(currentUserProvider.future);
   if (currentUser == null) return {'money': 0.0, 'boxes': 0.0};
   
@@ -46,29 +46,50 @@ final agentStatsProvider = FutureProvider<Map<String, double>>((ref) async {
 });
 
 /// Provider for agent's registration stats (count and total fees)
-final agentRegistrationStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  final currentUser = await ref.watch(currentUserProvider.future);
-  if (currentUser == null) return {'count': 0, 'totalFees': 0.0};
-  
-  final supabase = ref.watch(supabaseClientProvider);
-  
-  // Fetch registration fee data for customers registered by this agent
-  final response = await supabase
-      .from('customers')
-      .select('registration_fee_paid')
-      .eq('agent_id', currentUser.id);
-  
-  final customers = response as List;
-  final count = customers.length;
-  final totalFees = customers
-      .map((c) => (c['registration_fee_paid'] as num?)?.toDouble() ?? 0.0)
-      .fold<double>(0.0, (sum, fee) => sum + fee);
-  
-  return {'count': count, 'totalFees': totalFees};
+final agentRegistrationStatsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+  try {
+    final currentUser = await ref.watch(currentUserProvider.future);
+    if (currentUser == null) return {'count': 0, 'totalFees': 0.0};
+    
+    final supabase = ref.watch(supabaseClientProvider);
+    
+    // Fetch customers and their product registrations to calculate fees
+    final response = await supabase
+        .from('customers')
+        .select('''
+          id,
+          customer_products(registration_fee_paid)
+        ''')
+        .eq('assigned_agent_id', currentUser.id);
+    
+    final customers = response as List;
+    final count = customers.length;
+    
+    // Calculate total fees by summing up registration_fee_paid from all product assignments
+    // AND calculate total count of product registrations (history of assignments)
+    var totalCount = 0;
+    final totalFees = customers.fold<double>(0.0, (sum, customer) {
+      final products = customer['customer_products'] as List?;
+      if (products == null || products.isEmpty) return sum;
+      
+      totalCount += products.length; // Count each product assignment as a registration
+      
+      final customerFees = products
+          .map((p) => (p['registration_fee_paid'] as num?)?.toDouble() ?? 0.0)
+          .fold<double>(0.0, (pSum, fee) => pSum + fee);
+          
+      return sum + customerFees;
+    });
+    
+    return {'count': totalCount, 'totalFees': totalFees};
+  } catch (e) {
+    // Return safe default values on error
+    return {'count': 0, 'totalFees': 0.0};
+  }
 });
 
 /// Provider for agent's payment history
-final agentPaymentsProvider = FutureProvider<List<Payment>>((ref) async {
+final agentPaymentsProvider = FutureProvider.autoDispose<List<Payment>>((ref) async {
   final currentUser = await ref.watch(currentUserProvider.future);
   if (currentUser == null) return [];
   
@@ -77,7 +98,7 @@ final agentPaymentsProvider = FutureProvider<List<Payment>>((ref) async {
 });
 
 /// Provider for agent's assigned customers
-final assignedCustomersProvider = FutureProvider<List<Customer>>((ref) async {
+final assignedCustomersProvider = FutureProvider.autoDispose<List<Customer>>((ref) async {
   final currentUser = await ref.watch(currentUserProvider.future);
   if (currentUser == null) return [];
   
@@ -85,10 +106,15 @@ final assignedCustomersProvider = FutureProvider<List<Customer>>((ref) async {
   return await customerRepo.fetchCustomersByAgent(currentUser.id);
 });
 
-/// Provider for total registered customers count (Point 6)
+/// Provider for total registered products count (includes all products, even completed)
 final agentCustomerCountProvider = FutureProvider<int>((ref) async {
-  final customers = await ref.watch(assignedCustomersProvider.future);
-  return customers.length;
+  final customerProductRepo = ref.watch(customerProductRepositoryProvider);
+  final currentUser = await ref.watch(currentUserProvider.future);
+  if (currentUser == null) return 0;
+  
+  // Count total products assigned to agent's customers (including completed/paid products)
+  final allProducts = await customerProductRepo.fetchProductsByAgent(currentUser.id);
+  return allProducts.length;
 });
 
 /// Provider for zones (from zones table)

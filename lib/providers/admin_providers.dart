@@ -45,23 +45,41 @@ final dashboardStatsProvider = FutureProvider<Map<String, double>>((ref) async {
   // Fetch total payment collections
   final totalPaymentCollections = await paymentRepo.fetchTotalRevenue();
   
-  // Fetch projected revenue (sum of all balance_due)
-  final balanceResponse = await supabase
-      .from('customers')
-      .select('balance_due');
+  // Fetch total product value from customer_products table (boxes_assigned * price_per_box via products join)
+  final cpProductsResponse = await supabase
+      .from('customer_products')
+      .select('boxes_assigned, products!inner(box_rate)');
   
-  final projectedRevenue = (balanceResponse as List)
-      .map((json) => (json['balance_due'] as num).toDouble())
-      .fold<double>(0.0, (sum, balance) => sum + balance);
+  final cpProductTotal = (cpProductsResponse as List)
+      .map((json) {
+        final boxes = (json['boxes_assigned'] as num).toDouble();
+        final boxRate = (json['products']['box_rate'] as num).toDouble();
+        return boxes * boxRate;
+      })
+      .fold<double>(0.0, (sum, value) => sum + value);
   
-  // Calculate registration income (sum of actual fees paid by each customer)
-  final registrationResponse = await supabase
+  // Calculate registration income from customers table
+  final customerRegResponse = await supabase
       .from('customers')
       .select('registration_fee_paid');
   
-  final registrationIncome = (registrationResponse as List)
+  final customerRegIncome = (customerRegResponse as List)
       .map((json) => (json['registration_fee_paid'] as num?)?.toDouble() ?? 0.0)
       .fold<double>(0.0, (sum, fee) => sum + fee);
+  
+  // Calculate registration income from customer_products table
+  final cpRegResponse = await supabase
+      .from('customer_products')
+      .select('registration_fee_paid');
+  
+  final cpRegIncome = (cpRegResponse as List)
+      .map((json) => (json['registration_fee_paid'] as num?)?.toDouble() ?? 0.0)
+      .fold<double>(0.0, (sum, fee) => sum + fee);
+  
+  final registrationIncome = customerRegIncome + cpRegIncome;
+  
+  // Projected Revenue = total products assigned value + registration fees
+  final projectedRevenue = cpProductTotal + registrationIncome;
   
   // Total revenue = payment collections + registration income
   final totalRevenue = totalPaymentCollections + registrationIncome;
@@ -82,7 +100,27 @@ final productCustomerCountsProvider = FutureProvider<Map<int, int>>((ref) async 
 /// Provider for a specific agent's daily collection (Point 9)
 final agentDailyCollectionForAdminProvider = FutureProvider.family<double, ({String agentId, DateTime date})>((ref, params) async {
   final paymentRepo = ref.watch(paymentRepositoryProvider);
-  return await paymentRepo.fetchAgentDailyCollection(params.agentId, params.date);
+  final supabase = ref.watch(supabaseClientProvider);
+  
+  // 1. Fetch standard payments
+  final paymentsTotal = await paymentRepo.fetchAgentDailyCollection(params.agentId, params.date);
+
+  // 2. Fetch registration fees from NEW products (customer_products) created on this date
+  final startOfDay = DateTime(params.date.year, params.date.month, params.date.day);
+  final endOfDay = DateTime(params.date.year, params.date.month, params.date.day, 23, 59, 59);
+
+  final regFeesResponse = await supabase
+      .from('customer_products')
+      .select('registration_fee_paid, customers!inner(assigned_agent_id)')
+      .eq('customers.assigned_agent_id', params.agentId)
+      .gte('created_at', startOfDay.toIso8601String())
+      .lte('created_at', endOfDay.toIso8601String());
+
+  final regFeesTotal = (regFeesResponse as List)
+      .map((json) => (json['registration_fee_paid'] as num?)?.toDouble() ?? 0.0)
+      .fold<double>(0.0, (sum, fee) => sum + fee);
+
+  return paymentsTotal + regFeesTotal;
 });
 
 /// Provider for a specific agent's daily payments (Point 9)
@@ -92,10 +130,17 @@ final agentDailyPaymentsForAdminProvider = FutureProvider.family<List<Payment>, 
 });
 
 /// Provider for a specific agent's customer count (Point 9)
+/// UPDATED: Now counts TOTAL PRODUCTS assigned, not just unique customers
 final agentCustomerCountForAdminProvider = FutureProvider.family<int, String>((ref, agentId) async {
-  final customerRepo = ref.watch(customerRepositoryProvider);
-  final customers = await customerRepo.fetchCustomersByAgent(agentId);
-  return customers.length;
+  final supabase = ref.watch(supabaseClientProvider);
+  
+  // Count items in customer_products where the linked customer belongs to this agent
+  final response = await supabase
+      .from('customer_products')
+      .select('id, customers!inner(assigned_agent_id)')
+      .eq('customers.assigned_agent_id', agentId);
+      
+  return (response as List).length;
 });
 
 /// Provider for pending payment edit requests (admin approval)

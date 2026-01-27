@@ -6,23 +6,22 @@ class CustomerRepository {
 
   CustomerRepository(this._supabase);
 
-  /// Create a new customer with initial balance_due set to product's total_price
+  /// Create a new customer (product is optional - can be added later)
   Future<Customer> createCustomer({
     required String fullName,
     required String phone,
     required int zoneId,
-    required int productId,
+    int? productId,
     required String assignedAgentId,
-    required double initialBalanceDue,
-    required int totalBoxes,
+    double initialBalanceDue = 0,
+    int totalBoxes = 0,
     required double registrationFeePaid,
   }) async {
     try {
-      final data = {
+      final data = <String, dynamic>{
         'full_name': fullName,
         'phone': phone,
         'zone_id': zoneId,
-        'product_id': productId,
         'assigned_agent_id': assignedAgentId,
         'balance_due': initialBalanceDue,
         'total_boxes_assigned': totalBoxes,
@@ -30,6 +29,11 @@ class CustomerRepository {
         'registration_fee_paid': registrationFeePaid,
         'is_active': true,
       };
+      
+      // Only add product_id if provided
+      if (productId != null) {
+        data['product_id'] = productId;
+      }
 
       final response = await _supabase
           .from('customers')
@@ -50,7 +54,7 @@ class CustomerRepository {
           .from('customers')
           .select('''
             *,
-            products!inner(name),
+            products(name),
             zones!inner(name)
           ''')
           .eq('assigned_agent_id', agentId)
@@ -163,7 +167,7 @@ class CustomerRepository {
           .from('customers')
           .select('''
             *,
-            products!inner(name, box_rate),
+            products(name, box_rate),
             zones!inner(name)
           ''')
           .eq('id', id)

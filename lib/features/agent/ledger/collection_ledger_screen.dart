@@ -7,11 +7,26 @@ import '../../../providers/auth_provider.dart';
 import '../../../data/models/payment.dart';
 import 'payment_edit_dialog.dart';
 
-class CollectionLedgerScreen extends ConsumerWidget {
+class CollectionLedgerScreen extends ConsumerStatefulWidget {
   const CollectionLedgerScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CollectionLedgerScreen> createState() => _CollectionLedgerScreenState();
+}
+
+class _CollectionLedgerScreenState extends ConsumerState<CollectionLedgerScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Force refresh the provider every time this screen is opened
+    // This uses a microtask to ensure it happens safely during init
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(agentPaymentsProvider);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final paymentsAsync = ref.watch(agentPaymentsProvider);
 
     return Scaffold(
@@ -34,7 +49,7 @@ class CollectionLedgerScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.receipt_long_rounded, size: 64, color: Colors.grey.shade300),
+                   Icon(Icons.receipt_long_rounded, size: 64, color: Colors.grey.shade300),
                   const SizedBox(height: 16),
                   Text(
                     'No collections recorded yet',

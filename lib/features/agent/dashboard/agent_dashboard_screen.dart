@@ -75,7 +75,7 @@ class AgentDashboardScreen extends ConsumerWidget {
             const SizedBox(height: 16),
 
             // Registration Stats Card (NEW - shows total registrations and fees)
-            _buildRegistrationStatsCard(registrationStatsAsync),
+            _buildRegistrationStatsCard(context, ref, registrationStatsAsync),
             const SizedBox(height: 24),
 
             // Action Grid
@@ -215,7 +215,7 @@ class AgentDashboardScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'TOTAL REGISTERED CUSTOMERS',
+                  'TOTAL REGISTERED PRODUCTS',
                   style: TextStyle(
                     color: Colors.grey.shade500,
                     fontSize: 11,
@@ -266,6 +266,130 @@ class AgentDashboardScreen extends ConsumerWidget {
               color: Colors.white,
               fontWeight: FontWeight.w600,
               fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRegistrationStatsCard(BuildContext context, WidgetRef ref, AsyncValue<Map<String, dynamic>> registrationStatsAsync) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'REGISTRATIONS & FEES',
+            style: TextStyle(
+              color: Colors.grey.shade500,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 16),
+          registrationStatsAsync.when(
+            data: (stats) {
+              final rawCount = stats['count'];
+              final count = rawCount is int ? rawCount : int.tryParse(rawCount.toString()) ?? 0;
+              final rawFees = stats['totalFees'];
+              final fees = rawFees is num ? rawFees.toDouble() : double.tryParse(rawFees.toString()) ?? 0.0;
+              return Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$count',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.agentTextColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'New Clients',
+                          style: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    height: 40,
+                    width: 1,
+                    color: Colors.grey.shade200,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'GHC ${fees.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.agentAccentRegister,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Fees Collected',
+                          style: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+            error: (error, _) => Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.dangerColor.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.dangerColor.withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded, color: AppTheme.dangerColor, size: 20),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Could not load stats',
+                      style: TextStyle(color: AppTheme.dangerColor, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => ref.invalidate(agentRegistrationStatsProvider),
+                    child: const Icon(Icons.refresh_rounded, color: AppTheme.dangerColor, size: 18),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -394,8 +518,29 @@ class AgentDashboardScreen extends ConsumerWidget {
               child: CircularProgressIndicator(color: AppTheme.agentPrimaryColor),
             ),
           ),
-          error: (error, _) => Center(
-            child: Text('Error: $error', style: const TextStyle(color: AppTheme.dangerColor)),
+          error: (error, _) => Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppTheme.dangerColor.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.dangerColor.withOpacity(0.2)),
+            ),
+            child: Column(
+              children: [
+                const Icon(Icons.wifi_off_rounded, color: AppTheme.dangerColor, size: 32),
+                const SizedBox(height: 12),
+                Text(
+                  'Failed to load collections',
+                  style: const TextStyle(color: AppTheme.dangerColor, fontWeight: FontWeight.w700),
+                ),
+                TextButton.icon(
+                  onPressed: () => ref.invalidate(agentDailyPaymentsProvider),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('Retry'),
+                  style: TextButton.styleFrom(foregroundColor: AppTheme.dangerColor),
+                ),
+              ],
+            ),
           ),
         ),
       ],

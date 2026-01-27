@@ -32,19 +32,38 @@ class CustomerProduct {
   });
 
   factory CustomerProduct.fromJson(Map<String, dynamic> json) {
+    // Helper to safely parse int from either int or String
+    int parseIntOrZero(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      return int.tryParse(value.toString()) ?? 0;
+    }
+    
+    double parseDoubleOrZero(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is num) return value.toDouble();
+      return double.tryParse(value.toString()) ?? 0.0;
+    }
+
+    double? parseDoubleOrNull(dynamic value) {
+      if (value == null) return null;
+      if (value is num) return value.toDouble();
+      return double.tryParse(value.toString());
+    }
+
     return CustomerProduct(
       id: json['id'] as String,
       customerId: json['customer_id'] as String,
-      productId: json['product_id'] as int,
+      productId: parseIntOrZero(json['product_id']),
       isActive: json['is_active'] as bool? ?? true,
-      boxesAssigned: json['boxes_assigned'] as int? ?? 0,
-      boxesPaid: json['boxes_paid'] as int? ?? 0,
-      balanceDue: (json['balance_due'] as num?)?.toDouble() ?? 0.0,
-      registrationFeePaid: (json['registration_fee_paid'] as num?)?.toDouble() ?? 0.0,
+      boxesAssigned: parseIntOrZero(json['boxes_assigned']),
+      boxesPaid: parseIntOrZero(json['boxes_paid']),
+      balanceDue: parseDoubleOrZero(json['balance_due']),
+      registrationFeePaid: parseDoubleOrZero(json['registration_fee_paid']),
       createdAt: DateTime.parse(json['created_at'] as String),
       productName: json['product_name'] as String?,
-      pricePerBox: (json['price_per_box'] as num?)?.toDouble(),
-      totalPrice: (json['total_price'] as num?)?.toDouble(),
+      pricePerBox: parseDoubleOrNull(json['price_per_box']),
+      totalPrice: parseDoubleOrNull(json['total_price']),
     );
   }
 

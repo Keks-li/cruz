@@ -257,7 +257,7 @@ class AgentProfileScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'TOTAL CUSTOMERS REGISTERED',
+                  'TOTAL PRODUCTS REGISTERED',
                   style: TextStyle(
                     color: Colors.grey.shade500,
                     fontSize: 11,

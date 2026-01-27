@@ -23,16 +23,31 @@ final productPaymentHistoryProvider = FutureProvider.family<List<Payment>, ({int
       .from('payments')
       .select('''
         *,
-        customers!inner(full_name, product_id, products!inner(name)),
+        product_id,
+        customers!left(full_name, product_id, products!left(name)),
         profiles!agent_id(full_name)
       ''')
       .gte('timestamp', startOfDay.toIso8601String())
       .lte('timestamp', endOfDay.toIso8601String())
       .order('timestamp', ascending: false);
 
-  // Filter by product_id
+  // Filter: Include payment if:
+  // 1. payment.product_id matches (NEW)
+  // 2. OR payment.product_id is null AND customer.main_product_id matches (LEGACY)
   final payments = (response as List)
-      .where((json) => json['customers']?['product_id'] == params.productId)
+      .where((json) {
+        final paymentProductIdRaw = json['product_id'];
+        if (paymentProductIdRaw != null) {
+          // New logic: check direct payment->product link
+          final paymentProductId = paymentProductIdRaw.toString();
+          return paymentProductId == params.productId.toString();
+        } else {
+          // Legacy logic: check customer->main_product link
+          // This only works for legacy single-product customers
+          final customerProductId = json['customers']?['product_id']?.toString();
+          return customerProductId == params.productId.toString();
+        }
+      })
       .map((json) {
         final payment = Map<String, dynamic>.from(json as Map<String, dynamic>);
         if (payment['customers'] != null) {

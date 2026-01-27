@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme.dart';
 import '../../../core/providers.dart';
 import'../../../providers/agent_providers.dart';
+import '../../../providers/admin_providers.dart';
 import '../../../providers/auth_provider.dart';
 
 class NewRegistrationScreen extends ConsumerStatefulWidget {
@@ -18,7 +19,6 @@ class _NewRegistrationScreenState extends ConsumerState<NewRegistrationScreen> {
   final _phoneController = TextEditingController();
   
   int? _selectedZoneId;
-  int? _selectedProductId;
   bool _isLoading = false;
 
   @override
@@ -31,9 +31,9 @@ class _NewRegistrationScreenState extends ConsumerState<NewRegistrationScreen> {
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_selectedZoneId == null || _selectedProductId == null) {
+    if (_selectedZoneId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select zone and product')),
+        const SnackBar(content: Text('Please select a zone')),
       );
       return;
     }
@@ -42,7 +42,6 @@ class _NewRegistrationScreenState extends ConsumerState<NewRegistrationScreen> {
 
     try {
       final customerRepo = ref.read(customerRepositoryProvider);
-      final productRepo = ref.read(productRepositoryProvider);
       final settingsRepo = ref.read(settingsRepositoryProvider);
       final currentUser = await ref.read(currentUserProvider.future);
 
@@ -50,25 +49,14 @@ class _NewRegistrationScreenState extends ConsumerState<NewRegistrationScreen> {
         throw Exception('Not logged in');
       }
 
-      // Get the selected product to retrieve its total_price
-      final product = await productRepo.getProductById(_selectedProductId!.toString());
-      if (product == null) {
-        throw Exception('Product not found');
-      }
-
-      // Get current registration fee
-      final registrationFee = await settingsRepo.getRegistrationFee();
-
-      // Create customer with balance_due = product's total_price
+      // Create customer without product (product added separately later)
+      // Registration fee is 0 initially because it's calculated per product assigned
       await customerRepo.createCustomer(
         fullName: _fullNameController.text.trim(),
         phone: _phoneController.text.trim(),
         zoneId: _selectedZoneId!,
-        productId: _selectedProductId!,
         assignedAgentId: currentUser.id,
-        initialBalanceDue: product.totalPrice,
-        totalBoxes: product.totalBoxes,
-        registrationFeePaid: registrationFee,
+        registrationFeePaid: 0,
       );
 
       if (mounted) {
@@ -77,11 +65,11 @@ class _NewRegistrationScreenState extends ConsumerState<NewRegistrationScreen> {
         _phoneController.clear();
         setState(() {
           _selectedZoneId = null;
-          _selectedProductId = null;
         });
 
-        // Refresh customer list
+        // Refresh customer list (both agent and admin views)
         ref.invalidate(assignedCustomersProvider);
+        ref.invalidate(allCustomersProvider);
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -109,7 +97,6 @@ class _NewRegistrationScreenState extends ConsumerState<NewRegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     final zonesAsync = ref.watch(zonesProvider);
-    final productsAsync = ref.watch(agentProductsProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.agentBackgroundColor,
@@ -199,36 +186,6 @@ class _NewRegistrationScreenState extends ConsumerState<NewRegistrationScreen> {
                     }).toList(),
                     onChanged: (value) => setState(() => _selectedZoneId = value),
                     validator: (value) => value == null ? 'Please select a zone' : null,
-                  );
-                },
-                loading: () => const LinearProgressIndicator(color: AppTheme.agentPrimaryColor),
-                error: (error, _) => Text('Error: $error'),
-              ),
-              const SizedBox(height: 16),
-
-              // Product Dropdown
-              productsAsync.when(
-                data: (products) {
-                  if (products.isEmpty) {
-                    return _buildErrorState('No products available. Admin needs to add products.');
-                  }
-                  
-                  return _buildDropdownField<int>(
-                    value: _selectedProductId,
-                    label: 'Product',
-                    hint: 'Select product',
-                    icon: Icons.inventory_2_rounded,
-                    items: products.map((product) {
-                      return DropdownMenuItem(
-                        value: product.id,
-                        child: Text(
-                          '${product.name} - GHC ${product.boxRate.toStringAsFixed(2)}/box',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) => setState(() => _selectedProductId = value),
-                    validator: (value) => value == null ? 'Please select a product' : null,
                   );
                 },
                 loading: () => const LinearProgressIndicator(color: AppTheme.agentPrimaryColor),

@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme.dart';
+import '../../../providers/agent_providers.dart';
+import '../../../providers/admin_providers.dart';
 import '../dashboard/agent_dashboard_screen.dart';
 import '../customers/lookup_client_screen.dart';
 import '../ledger/collection_ledger_screen.dart';
 import '../registration/new_registration_screen.dart';
 
-class AgentNavShell extends StatefulWidget {
+class AgentNavShell extends ConsumerStatefulWidget {
   const AgentNavShell({super.key});
 
   @override
-  State<AgentNavShell> createState() => _AgentNavShellState();
+  ConsumerState<AgentNavShell> createState() => _AgentNavShellState();
 }
 
-class _AgentNavShellState extends State<AgentNavShell> {
+class _AgentNavShellState extends ConsumerState<AgentNavShell> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
@@ -22,11 +25,31 @@ class _AgentNavShellState extends State<AgentNavShell> {
     const NewRegistrationScreen(),
   ];
 
+  void _onItemTapped(int index) {
+    if (_selectedIndex == index) return;
+    
+    setState(() => _selectedIndex = index);
+
+    // Force refresh data when switching tabs to ensure freshness
+    switch (index) {
+      case 0: // Dashboard
+        ref.invalidate(agentDailyCollectionProvider);
+        ref.invalidate(agentRegistrationStatsProvider);
+        ref.invalidate(agentStatsProvider);
+        ref.invalidate(agentCustomerCountProvider);
+        ref.invalidate(agentDailyPaymentsProvider);
+        break;
+      case 2: // Ledger
+        ref.invalidate(agentPaymentsProvider);
+        break;
+      case 1: // Lookup
+        ref.invalidate(assignedCustomersProvider);
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Explicit debug print
-    debugPrint('Building AgentNavShell with $_selectedIndex');
-    
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
@@ -41,7 +64,7 @@ class _AgentNavShellState extends State<AgentNavShell> {
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          onTap: (index) => setState(() => _selectedIndex = index),
+          onTap: _onItemTapped,
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
           elevation: 0,

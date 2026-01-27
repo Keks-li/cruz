@@ -13,7 +13,7 @@ class CustomerProductRepository {
           .from('customer_products')
           .select('''
             *,
-            products!inner(name, box_rate, total_price)
+            products!left(name, box_rate, total_price)
           ''')
           .eq('customer_id', customerId)
           .order('created_at', ascending: false);
@@ -97,12 +97,12 @@ class CustomerProductRepository {
     try {
       final response = await _supabase
           .from('customer_products')
-          .select('product_id')
-          .eq('is_active', true);
+          .select('product_id');
 
       final counts = <int, int>{};
       for (final row in response as List) {
-        final productId = row['product_id'] as int;
+        final rawProductId = row['product_id'];
+        final productId = rawProductId is int ? rawProductId : int.tryParse(rawProductId.toString()) ?? 0;
         counts[productId] = (counts[productId] ?? 0) + 1;
       }
       return counts;
@@ -126,7 +126,8 @@ class CustomerProductRepository {
           .single();
 
       final currentBalanceDue = (currentResponse['balance_due'] as num).toDouble();
-      final currentBoxesPaid = currentResponse['boxes_paid'] as int;
+      final rawBoxesPaid = currentResponse['boxes_paid'];
+      final currentBoxesPaid = rawBoxesPaid is int ? rawBoxesPaid : int.tryParse(rawBoxesPaid.toString()) ?? 0;
 
       await _supabase
           .from('customer_products')
@@ -153,6 +154,25 @@ class CustomerProductRepository {
       return response != null;
     } catch (e) {
       throw Exception('Failed to check customer product: $e');
+    }
+  }
+
+  /// Fetch all products for customers assigned to a specific agent (includes all, even completed)
+  Future<List<CustomerProduct>> fetchProductsByAgent(String agentId) async {
+    try {
+      final response = await _supabase
+          .from('customer_products')
+          .select('''
+            *,
+            customers!inner(assigned_agent_id)
+          ''')
+          .eq('customers.assigned_agent_id', agentId);
+
+      return (response as List)
+          .map((json) => CustomerProduct.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch agent products: $e');
     }
   }
 }
