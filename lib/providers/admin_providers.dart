@@ -149,6 +149,23 @@ final pendingEditRequestsProvider = FutureProvider<List<PaymentEditRequest>>((re
   return await requestRepo.fetchPendingRequests();
 });
 
+/// Provider for a specific agent's daily customer registrations count
+final agentDailyRegistrationsForAdminProvider = FutureProvider.family<int, ({String agentId, DateTime date})>((ref, params) async {
+  final supabase = ref.watch(supabaseClientProvider);
+  
+  final startOfDay = DateTime(params.date.year, params.date.month, params.date.day);
+  final endOfDay = DateTime(params.date.year, params.date.month, params.date.day, 23, 59, 59);
+
+  final response = await supabase
+      .from('customer_products')
+      .select('id, customers!inner(assigned_agent_id)')
+      .eq('customers.assigned_agent_id', params.agentId)
+      .gte('created_at', startOfDay.toIso8601String())
+      .lte('created_at', endOfDay.toIso8601String());
+      
+  return (response as List).length;
+});
+
 /// Provider for all payment edit requests (history)
 final allEditRequestsProvider = FutureProvider<List<PaymentEditRequest>>((ref) async {
   final requestRepo = ref.watch(paymentEditRequestRepositoryProvider);

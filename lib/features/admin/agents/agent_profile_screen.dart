@@ -27,6 +27,9 @@ class AgentProfileScreen extends ConsumerWidget {
     final customerCountAsync = ref.watch(
       agentCustomerCountForAdminProvider(agent.id),
     );
+    final dailyRegistrationsAsync = ref.watch(
+      agentDailyRegistrationsForAdminProvider((agentId: agent.id, date: selectedDate)),
+    );
 
     return Scaffold(
       backgroundColor: AppTheme.adminBackgroundColor,
@@ -57,6 +60,10 @@ class AgentProfileScreen extends ConsumerWidget {
 
             // Daily Collection Card with Date Picker (Point 9)
             _buildDailyCollectionCard(context, ref, selectedDate, dailyCollectionAsync),
+            const SizedBox(height: 16),
+
+            // Daily Registrations Card
+            _buildDailyRegistrationsCard(selectedDate, dailyRegistrationsAsync),
             const SizedBox(height: 16),
 
             // Customer Count Card
@@ -220,6 +227,72 @@ class AgentProfileScreen extends ConsumerWidget {
             error: (_, __) => const Text(
               'Error loading',
               style: TextStyle(color: Colors.white70),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyRegistrationsCard(
+    DateTime selectedDate,
+    AsyncValue<int> dailyRegistrationsAsync,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppTheme.adminAccentRevenue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.person_add_rounded,
+              color: AppTheme.adminAccentRevenue,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'TOTAL REGISTERED ${_formatDateLabel(selectedDate)}',
+                  style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                dailyRegistrationsAsync.when(
+                  data: (count) => Text(
+                    '$count',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.adminTextColor,
+                    ),
+                  ),
+                  loading: () => const SizedBox(
+                    height: 28,
+                    width: 28,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  error: (_, __) => const Text('Error', style: TextStyle(color: AppTheme.dangerColor)),
+                ),
+              ],
             ),
           ),
         ],
@@ -475,5 +548,18 @@ class AgentProfileScreen extends ConsumerWidget {
       return 'Yesterday';
     }
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  String _formatDateLabel(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dateToCheck = DateTime(date.year, date.month, date.day);
+
+    if (dateToCheck == today) {
+      return 'TODAY';
+    } else if (dateToCheck == today.subtract(const Duration(days: 1))) {
+      return 'YESTERDAY';
+    }
+    return 'ON ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 }
