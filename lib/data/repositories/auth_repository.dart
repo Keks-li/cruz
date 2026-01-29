@@ -141,6 +141,33 @@ class AuthRepository {
     }
   }
 
+  /// Send password reset email to the provided email address
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _supabase.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'https://cruz-lake.vercel.app/reset-password',
+      );
+    } on AuthException catch (e) {
+      throw Exception('Failed to send reset email: ${e.message}');
+    } catch (e) {
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  /// Update the password for the currently authenticated user
+  Future<void> updatePassword(String newPassword) async {
+    try {
+      await _supabase.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
+    } on AuthException catch (e) {
+      throw Exception('Failed to update password: ${e.message}');
+    } catch (e) {
+      throw Exception('An error occurred: $e');
+    }
+  }
+
   /// Stream of auth state changes
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 

@@ -4,6 +4,7 @@ import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../data/models/profile.dart';
+import 'forgot_password_screen.dart';
 import '../admin/navigation/admin_nav_shell.dart';
 import '../agent/navigation/agent_nav_shell.dart';
 
@@ -354,7 +355,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         enabled: !_isLoading,
                         onSubmitted: (_) => _handleLogin(),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 16),
+
+                      // Forgot Password Link
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: _isLoading
+                              ? null
+                              : () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const ForgotPasswordScreen(),
+                                    ),
+                                  );
+                                },
+                          child: Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              color: _isLoading ? Colors.grey.shade400 : primaryNavy,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
 
                       // Login Button
                       SizedBox(
