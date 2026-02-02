@@ -588,49 +588,69 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                             children: [
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            cp.productName ?? 'Product ${cp.productId}',
-                                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: cp.isActive ? AppTheme.adminTextColor : Colors.grey),
-                                          ),
-                                          if (!cp.isActive) ...[
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: AppTheme.dangerColor.withOpacity(0.1),
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: const Text(
-                                                'TERMINATED',
-                                                style: TextStyle(
-                                                  color: AppTheme.dangerColor,
-                                                  fontWeight: FontWeight.w800,
-                                                  fontSize: 9,
-                                                ),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                cp.productName ?? 'Product ${cp.productId}',
+                                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: cp.isActive ? AppTheme.adminTextColor : Colors.grey),
                                               ),
                                             ),
+                                            if (!cp.isActive) ...[
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.dangerColor.withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: const Text(
+                                                  'TERMINATED',
+                                                  style: TextStyle(
+                                                    color: AppTheme.dangerColor,
+                                                    fontWeight: FontWeight.w800,
+                                                    fontSize: 9,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'GHC ${cp.pricePerBox?.toStringAsFixed(0) ?? '0'} / box • ${cp.boxesAssigned} Boxes',
+                                          style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w600, fontSize: 13),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Row(
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            'GHC ${cp.totalPrice?.toStringAsFixed(0) ?? '0'}',
+                                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor),
+                                          ),
                                         ],
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'GHC ${cp.pricePerBox?.toStringAsFixed(0) ?? '0'} / box • ${cp.boxesAssigned} Boxes',
-                                        style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w600, fontSize: 13),
-                                      ),
-                                    ],
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        'GHC ${cp.totalPrice?.toStringAsFixed(0) ?? '0'}',
-                                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor),
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        onPressed: () => _deleteProductFromCustomer(cp),
+                                        icon: const Icon(Icons.delete_outline_rounded),
+                                        color: AppTheme.dangerColor,
+                                        iconSize: 20,
+                                        tooltip: 'Delete Product',
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
                                       ),
                                     ],
                                   ),
@@ -1066,6 +1086,63 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
+      }
+    }
+  }
+
+  void _deleteProductFromCustomer(CustomerProduct customerProduct) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Product'),
+        content: Text(
+          'Are you sure you want to delete "${customerProduct.productName ?? 'this product'}" from this customer?\n\nThis action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.dangerColor,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await ref.read(customerProductRepositoryProvider).deleteCustomerProduct(customerProduct.id);
+        
+        // Refresh the screen
+        setState(() {});
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Product deleted successfully',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              backgroundColor: AppTheme.adminAccentRevenue,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: AppTheme.dangerColor,
+            ),
+          );
+        }
       }
     }
   }

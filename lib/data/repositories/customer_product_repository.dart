@@ -77,6 +77,18 @@ class CustomerProductRepository {
     }
   }
 
+  /// Delete a customer product
+  Future<void> deleteCustomerProduct(String customerProductId) async {
+    try {
+      await _supabase
+          .from('customer_products')
+          .delete()
+          .eq('id', customerProductId);
+    } catch (e) {
+      throw Exception('Failed to delete customer product: $e');
+    }
+  }
+
   /// Get count of active customers for a product (Point 5: Product Dashboard badge)
   Future<int> getActiveCustomerCount(int productId) async {
     try {
