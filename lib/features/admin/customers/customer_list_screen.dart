@@ -103,12 +103,32 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                   return const Center(child: Text('No customers found'));
                 }
 
+                // Group customers by agent
+                final Map<String, List<Customer>> groupedCustomers = {};
+                for (final customer in filteredCustomers) {
+                  final agentName = customer.agentName ?? 'Unassigned';
+                  if (!groupedCustomers.containsKey(agentName)) {
+                    groupedCustomers[agentName] = [];
+                  }
+                  groupedCustomers[agentName]!.add(customer);
+                }
+
+                // Sort agent names (Unassigned at the end)
+                final sortedAgentNames = groupedCustomers.keys.toList()..sort((a, b) {
+                  if (a == 'Unassigned') return 1;
+                  if (b == 'Unassigned') return -1;
+                  return a.compareTo(b);
+                });
+
                 return ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  itemCount: filteredCustomers.length,
+                  itemCount: sortedAgentNames.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
-                    final customer = filteredCustomers[index];
+                    final agentName = sortedAgentNames[index];
+                    final agentCustomers = groupedCustomers[agentName]!;
+                    final isUnassigned = agentName == 'Unassigned';
+                    
                     return Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -116,48 +136,94 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                         border: Border.all(color: Colors.grey.shade200),
                         boxShadow: AppTheme.cardShadow,
                       ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        title: Text(
-                          customer.fullName,
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.adminTextColor),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 4),
-                            Text(
-                              customer.phone ?? 'No phone',
-                              style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                      child: Theme(
+                        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                        child: ExpansionTile(
+                          initiallyExpanded: true,
+                          tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          childrenPadding: const EdgeInsets.only(bottom: 12),
+                          leading: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isUnassigned 
+                                  ? AppTheme.adminAccentAlert.withOpacity(0.1)
+                                  : AppTheme.adminPrimaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ],
-                        ),
-                        trailing: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: customer.agentName != null 
-                                ? AppTheme.adminPrimaryColor.withOpacity(0.05) 
-                                : AppTheme.adminAccentAlert.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(20),
+                            child: Icon(
+                              Icons.person_rounded,
+                              color: isUnassigned ? AppTheme.adminAccentAlert : AppTheme.adminPrimaryColor,
+                              size: 20,
+                            ),
                           ),
-                          child: Text(
-                            (customer.agentName ?? 'Unassigned').toUpperCase(),
-                            style: TextStyle(
-                              color: customer.agentName != null ? AppTheme.adminPrimaryColor : AppTheme.adminAccentAlert,
+                          title: Text(
+                            agentName,
+                            style: const TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: 10,
-                              letterSpacing: 0.5,
+                              fontSize: 16,
+                              color: AppTheme.adminTextColor,
                             ),
                           ),
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => CustomerProfileScreen(customerId: customer.id),
+                          trailing: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isUnassigned 
+                                  ? AppTheme.adminAccentAlert.withOpacity(0.1)
+                                  : AppTheme.adminPrimaryColor.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                          );
-                        },
+                            child: Text(
+                              '${agentCustomers.length} ${agentCustomers.length == 1 ? 'CUSTOMER' : 'CUSTOMERS'}',
+                              style: TextStyle(
+                                color: isUnassigned ? AppTheme.adminAccentAlert : AppTheme.adminPrimaryColor,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 10,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          children: agentCustomers.map((customer) {
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                title: Text(
+                                  customer.fullName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                    color: AppTheme.adminTextColor,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  customer.phone ?? 'No phone',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade500,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                trailing: Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: Colors.grey.shade400,
+                                ),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CustomerProfileScreen(customerId: customer.id),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     );
                   },
