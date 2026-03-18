@@ -166,6 +166,12 @@ final agentDailyRegistrationsForAdminProvider = FutureProvider.family<int, ({Str
   return (response as List).length;
 });
 
+/// Provider for pending backdated payment approvals
+final pendingPaymentApprovalsProvider = FutureProvider<List<Payment>>((ref) async {
+  final paymentRepo = ref.watch(paymentRepositoryProvider);
+  return await paymentRepo.fetchPendingApprovals();
+});
+
 /// Provider for all payment edit requests (history)
 final allEditRequestsProvider = FutureProvider<List<PaymentEditRequest>>((ref) async {
   final requestRepo = ref.watch(paymentEditRequestRepositoryProvider);

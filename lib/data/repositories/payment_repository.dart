@@ -16,6 +16,7 @@ class PaymentRepository {
     required double productBoxRate,
     int? productId, // Nullable for legacy support
     DateTime? paymentDate, // Optional: allows agents to backdate a payment
+    bool isApproved = true, // Default to true unless backdated
   }) async {
     try {
       // Calculate boxes collected
@@ -28,6 +29,7 @@ class PaymentRepository {
         'agent_id': agentId,
         'amount_paid': amount,
         'boxes_equivalent': boxesCollected,
+        'is_approved': isApproved,
         if (productId != null) 'product_id': productId,
         if (paymentDate != null) 'timestamp': paymentDate.toIso8601String(),
       };
@@ -38,8 +40,93 @@ class PaymentRepository {
           .select()
           .single();
 
-      // Update customer balance and boxes_paid
-      // Fetch current values first
+      // Only update balance if payment is approved (or wait for admin approval if false)
+      if (isApproved) {
+        // Update customer balance and boxes_paid
+        final customerResponse = await _supabase
+            .from('customers')
+            .select('balance_due, boxes_paid')
+            .eq('id', customerId)
+            .single();
+
+        final currentBalanceDue = (customerResponse['balance_due'] as num).toDouble();
+        final rawBoxesPaid = customerResponse['boxes_paid'];
+        final currentBoxesPaid = rawBoxesPaid is int ? rawBoxesPaid : int.tryParse(rawBoxesPaid.toString()) ?? 0;
+
+        final newBalanceDue = currentBalanceDue - amount;
+        final newBoxesPaid = currentBoxesPaid + boxesCollected;
+
+        await _supabase
+            .from('customers')
+            .update({
+              'balance_due': newBalanceDue,
+              'boxes_paid': newBoxesPaid,
+            })
+            .eq('id', customerId);
+      }
+
+      return Payment.fromJson(paymentResponse as Map<String, dynamic>);
+    } catch (e) {
+      throw Exception('Failed to record payment: $e');
+    }
+  }
+
+  /// Fetch pending unapproved payments (e.g. backdated ones needing admin approval)
+  Future<List<Payment>> fetchPendingApprovals() async {
+    try {
+      final response = await _supabase
+          .from('payments')
+          .select('''
+            *,
+            products!left(name),
+            profiles!agent_id(full_name),
+            customers!left(full_name, products!left(name))
+          ''')
+          .eq('is_approved', false)
+          .order('timestamp', ascending: false);
+
+      return (response as List).map((json) {
+        final payment = Map<String, dynamic>.from(json as Map<String, dynamic>);
+        if (payment['customers'] != null) {
+          payment['customer_name'] = payment['customers']['full_name'];
+          if (payment['products'] != null) {
+            payment['product_name'] = payment['products']['name'];
+          } else if (payment['customers']['products'] != null) {
+            payment['product_name'] = payment['customers']['products']['name'];
+          }
+        }
+        if (payment['profiles'] != null) {
+          payment['agent_name'] = payment['profiles']['full_name'];
+        }
+        return Payment.fromJson(payment);
+      }).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch pending approvals: $e');
+    }
+  }
+
+  /// Approve a pending backdated payment, updating customer balances accordingly
+  Future<void> approvePayment(String paymentId) async {
+    try {
+      // Fetch the unapproved payment details
+      final paymentResponse = await _supabase
+          .from('payments')
+          .select('customer_id, product_id, amount_paid, boxes_equivalent')
+          .eq('id', paymentId)
+          .single();
+
+      final customerId = paymentResponse['customer_id'] as String;
+      final productId = paymentResponse['product_id'];
+      final amountPaid = (paymentResponse['amount_paid'] as num).toDouble();
+      final boxesCollected = (paymentResponse['boxes_equivalent'] as num?)?.toInt() ?? 0;
+
+      // Mark the payment as approved
+      await _supabase
+          .from('payments')
+          .update({'is_approved': true})
+          .eq('id', paymentId);
+
+      // Now apply the effect on customer balances
       final customerResponse = await _supabase
           .from('customers')
           .select('balance_due, boxes_paid')
@@ -50,7 +137,7 @@ class PaymentRepository {
       final rawBoxesPaid = customerResponse['boxes_paid'];
       final currentBoxesPaid = rawBoxesPaid is int ? rawBoxesPaid : int.tryParse(rawBoxesPaid.toString()) ?? 0;
 
-      final newBalanceDue = currentBalanceDue - amount;
+      final newBalanceDue = currentBalanceDue - amountPaid;
       final newBoxesPaid = currentBoxesPaid + boxesCollected;
 
       await _supabase
@@ -61,9 +148,33 @@ class PaymentRepository {
           })
           .eq('id', customerId);
 
-      return Payment.fromJson(paymentResponse as Map<String, dynamic>);
+      // Also update the specific customer_product record if this payment was linked to one
+      if (productId != null) {
+        final cpResponse = await _supabase
+            .from('customer_products')
+            .select('id, balance_due, boxes_paid')
+            .eq('customer_id', customerId)
+            .eq('product_id', productId)
+            .maybeSingle();
+
+        if (cpResponse != null) {
+          final cpId = cpResponse['id'] as String;
+          final cpBalanceDue = (cpResponse['balance_due'] as num).toDouble();
+          final cpRawBoxesPaid = cpResponse['boxes_paid'];
+          final cpBoxesPaid = cpRawBoxesPaid is int ? cpRawBoxesPaid : int.tryParse(cpRawBoxesPaid.toString()) ?? 0;
+
+          await _supabase
+              .from('customer_products')
+              .update({
+                'balance_due': cpBalanceDue - amountPaid,
+                'boxes_paid': cpBoxesPaid + boxesCollected,
+              })
+              .eq('id', cpId);
+        }
+      }
+
     } catch (e) {
-      throw Exception('Failed to record payment: $e');
+      throw Exception('Failed to approve payment: $e');
     }
   }
 

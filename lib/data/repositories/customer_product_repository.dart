@@ -89,6 +89,29 @@ class CustomerProductRepository {
     }
   }
 
+  /// Cascade delete a customer product and its associated payments
+  Future<void> deleteCustomerProductCascade(String customerProductId, String customerId, int productId) async {
+    try {
+      // 1. Delete associated payments first to prevent foreign key issues
+      // Since payments link to both customer_id and product_id, we delete matching rows
+      await _supabase
+          .from('payments')
+          .delete()
+          .match({
+            'customer_id': customerId,
+            'product_id': productId,
+          });
+
+      // 2. Delete the actual product from the customer_products table
+      await _supabase
+          .from('customer_products')
+          .delete()
+          .eq('id', customerProductId);
+    } catch (e) {
+      throw Exception('Failed to cascade delete customer product: $e');
+    }
+  }
+
   /// Get count of active customers for a product (Point 5: Product Dashboard badge)
   Future<int> getActiveCustomerCount(int productId) async {
     try {
