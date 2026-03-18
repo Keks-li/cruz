@@ -7,6 +7,7 @@ import '../../../providers/admin_providers.dart';
 import 'widgets/revenue_card.dart';
 import 'widgets/stat_card.dart';
 import 'widgets/price_edit_approval_card.dart';
+import 'widgets/pending_payment_approvals_card.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -72,6 +73,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             child: ResponsiveWrapper(
               child: Column(
                 children: [
+                  // Backdated Payments Approval Card
+                  const PendingPaymentApprovalsCard(),
+
                   // Price Edit Approval Card
                   const PriceEditApprovalCard(),
 
