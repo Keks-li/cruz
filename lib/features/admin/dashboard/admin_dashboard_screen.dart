@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
+import '../../../core/responsive.dart';
 import '../../../core/theme.dart';
 import '../../../providers/admin_providers.dart';
 import 'widgets/revenue_card.dart';
@@ -68,29 +69,73 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                // Price Edit Approval Card
-                const PriceEditApprovalCard(),
-                RevenueCard(
-                  title: 'TOTAL SYSTEM REVENUE',
-                  value: 'GHC ${totalRevenue.toStringAsFixed(2)}',
-                  insight: 'Total revenue reached GHC ${totalRevenue.toStringAsFixed(2)} across all active agents.',
-                ),
-                const SizedBox(height: 24),
-                StatCard(
-                  label: 'PROJECTED REVENUE',
-                  value: 'GHC ${projectedRevenue.toStringAsFixed(2)}',
-                  icon: Icons.trending_up_rounded,
-                ),
-                StatCard(
-                  label: 'REGISTRATION INCOME',
-                  value: 'GHC ${registrationIncome.toStringAsFixed(2)}',
-                  icon: Icons.how_to_reg_rounded,
-                ),
-                
-                // Daily Collection Check
-                Container(
+            child: ResponsiveWrapper(
+              child: Column(
+                children: [
+                  // Price Edit Approval Card
+                  const PriceEditApprovalCard(),
+
+                  Builder(
+                    builder: (context) {
+                      final isDesktop = Responsive.isDesktop(context);
+                      if (isDesktop) {
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: RevenueCard(
+                                title: 'TOTAL SYSTEM REVENUE',
+                                value: 'GHC ${totalRevenue.toStringAsFixed(2)}',
+                                insight: 'Total revenue reached GHC ${totalRevenue.toStringAsFixed(2)} across all active agents.',
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 1,
+                              child: Column(
+                                children: [
+                                  StatCard(
+                                    label: 'PROJECTED REVENUE',
+                                    value: 'GHC ${projectedRevenue.toStringAsFixed(2)}',
+                                    icon: Icons.trending_up_rounded,
+                                  ),
+                                  StatCard(
+                                    label: 'REGISTRATION INCOME',
+                                    value: 'GHC ${registrationIncome.toStringAsFixed(2)}',
+                                    icon: Icons.how_to_reg_rounded,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                      return Column(
+                        children: [
+                          RevenueCard(
+                            title: 'TOTAL SYSTEM REVENUE',
+                            value: 'GHC ${totalRevenue.toStringAsFixed(2)}',
+                            insight: 'Total revenue reached GHC ${totalRevenue.toStringAsFixed(2)} across all active agents.',
+                          ),
+                          const SizedBox(height: 24),
+                          StatCard(
+                            label: 'PROJECTED REVENUE',
+                            value: 'GHC ${projectedRevenue.toStringAsFixed(2)}',
+                            icon: Icons.trending_up_rounded,
+                          ),
+                          StatCard(
+                            label: 'REGISTRATION INCOME',
+                            value: 'GHC ${registrationIncome.toStringAsFixed(2)}',
+                            icon: Icons.how_to_reg_rounded,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+
+                  // Daily Collection Check
+                  Container(
                   margin: const EdgeInsets.only(top: 16),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -277,6 +322,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   ),
                 ),
               ],
+            ),
             ),
           );
         },

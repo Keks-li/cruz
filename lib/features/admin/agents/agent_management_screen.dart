@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/responsive.dart';
 import '../../../core/theme.dart';
 import '../../../core/providers.dart';
 import '../../../providers/admin_providers.dart';
@@ -27,9 +28,10 @@ class AgentManagementScreen extends ConsumerWidget {
       ),
       body: agentsAsync.when(
         data: (agents) {
-          return Column(
-            children: [
-              Padding(
+          return ResponsiveWrapper(
+            child: Column(
+              children: [
+                Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Container(
                   padding: const EdgeInsets.all(20),
@@ -57,28 +59,80 @@ class AgentManagementScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              if (agents.isEmpty)
-                const Expanded(
-                  child: Center(child: Text('No agents found')),
-                )
-              else
-                Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    itemCount: agents.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final agent = agents[index];
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.grey.shade200),
-                          boxShadow: AppTheme.cardShadow,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: InkWell(
+                if (agents.isEmpty)
+                  const Expanded(
+                    child: Center(child: Text('No agents found')),
+                  )
+                else
+                  Expanded(
+                    child: Builder(
+                      builder: (context) {
+                        final isDesktop = Responsive.isDesktop(context);
+
+                        if (isDesktop) {
+                          return GridView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 2.5,
+                            ),
+                            itemCount: agents.length,
+                            itemBuilder: (context, index) {
+                              final agent = agents[index];
+                              return _buildAgentCard(context, ref, agent, index);
+                            },
+                          );
+                        }
+
+                        return ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                          itemCount: agents.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final agent = agents[index];
+                            return _buildAgentCard(context, ref, agent, index);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Error: $error'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.refresh(agentsListProvider),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAgentCard(BuildContext context, WidgetRef ref, dynamic agent, int index) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: InkWell(
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
@@ -201,32 +255,8 @@ class AgentManagementScreen extends ConsumerWidget {
                               },
                             ),
                           ),
-                          ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-            ],
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Error: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.refresh(agentsListProvider),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-      ),
+                      ),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/responsive.dart';
 import '../../../core/theme.dart';
 import '../../../core/providers.dart';
 import '../../../providers/admin_providers.dart';
@@ -41,11 +42,12 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
           ),
         ),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Container(
+      body: ResponsiveWrapper(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -261,7 +263,8 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
               ),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

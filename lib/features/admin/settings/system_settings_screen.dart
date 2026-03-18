@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/responsive.dart';
 import '../../../core/theme.dart';
 import '../../../core/providers.dart';
 import '../../../providers/admin_providers.dart';
@@ -154,10 +155,11 @@ class _SystemSettingsScreenState extends ConsumerState<SystemSettingsScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Registration Fee Card
+        child: ResponsiveWrapper(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Registration Fee Card
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -373,15 +375,16 @@ class _SystemSettingsScreenState extends ConsumerState<SystemSettingsScreen> {
               },
               icon: const Icon(Icons.logout_rounded),
               label: const Text('LOGOUT SYSTEM ADMIN', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.2)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.adminAccentAlert,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                minimumSize: const Size(double.infinity, 56),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.adminAccentAlert,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
