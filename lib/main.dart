@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'core/theme.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/update_password_screen.dart';
@@ -53,6 +54,18 @@ class _CruzaroAppState extends State<CruzaroApp> {
     });
   }
 
+  Widget _getInitialScreen() {
+    // For web platform, check if we have a password reset route
+    if (kIsWeb) {
+      final uri = Uri.base;
+      // Check if URL contains reset-password route
+      if (uri.path.contains('reset-password')) {
+        return const UpdatePasswordScreen();
+      }
+    }
+    return const LoginScreen();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -60,7 +73,7 @@ class _CruzaroAppState extends State<CruzaroApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       navigatorKey: _navigatorKey,
-      home: const LoginScreen(),
+      home: _getInitialScreen(),
     );
   }
 }

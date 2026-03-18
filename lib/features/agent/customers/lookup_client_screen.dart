@@ -47,6 +47,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
     int boxesToCollect = 1;
     int boxesRemaining = totalBoxes - boxesPaid;
     bool isLoading = false;
+    DateTime? selectedDate; // null = today (use DB default)
 
     showDialog(
       context: context,
@@ -162,7 +163,77 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+                // Date picker row
+                GestureDetector(
+                  onTap: () async {
+                    final now = DateTime.now();
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate ?? now,
+                      firstDate: DateTime(now.year - 1),
+                      lastDate: now,
+                      helpText: 'Select Payment Date',
+                      builder: (context, child) => Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: ColorScheme.light(
+                            primary: AppTheme.agentPrimaryColor,
+                          ),
+                        ),
+                        child: child!,
+                      ),
+                    );
+                    if (picked != null) setState(() => selectedDate = picked);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: selectedDate != null
+                          ? Colors.amber.shade50
+                          : AppTheme.agentPrimaryColor.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: selectedDate != null
+                            ? Colors.amber.shade300
+                            : AppTheme.agentPrimaryColor.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          size: 16,
+                          color: selectedDate != null
+                              ? Colors.amber.shade700
+                              : AppTheme.agentPrimaryColor,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            selectedDate != null
+                                ? 'Payment Date: ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
+                                : 'Payment Date: Today',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: selectedDate != null
+                                  ? Colors.amber.shade800
+                                  : AppTheme.agentPrimaryColor,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.edit_calendar_rounded,
+                          size: 16,
+                          color: selectedDate != null
+                              ? Colors.amber.shade700
+                              : AppTheme.agentPrimaryColor.withOpacity(0.6),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -217,6 +288,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                                 agentId: currentUser.id,
                                 amount: totalToCollect,
                                 productBoxRate: boxRate,
+                                paymentDate: selectedDate,
                               );
 
                               // Refresh data
@@ -765,6 +837,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
     int boxesToCollect = 1;
     int boxesRemaining = boxesAssigned - boxesPaid;
     bool isLoading = false;
+    DateTime? selectedDate; // null = today (use DB default)
 
     showDialog(
       context: context,
@@ -880,7 +953,77 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+                // Date picker row
+                GestureDetector(
+                  onTap: () async {
+                    final now = DateTime.now();
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate ?? now,
+                      firstDate: DateTime(now.year - 1),
+                      lastDate: now,
+                      helpText: 'Select Payment Date',
+                      builder: (context, child) => Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: ColorScheme.light(
+                            primary: AppTheme.agentPrimaryColor,
+                          ),
+                        ),
+                        child: child!,
+                      ),
+                    );
+                    if (picked != null) setState(() => selectedDate = picked);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: selectedDate != null
+                          ? Colors.amber.shade50
+                          : AppTheme.agentPrimaryColor.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: selectedDate != null
+                            ? Colors.amber.shade300
+                            : AppTheme.agentPrimaryColor.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          size: 16,
+                          color: selectedDate != null
+                              ? Colors.amber.shade700
+                              : AppTheme.agentPrimaryColor,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            selectedDate != null
+                                ? 'Payment Date: ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
+                                : 'Payment Date: Today',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: selectedDate != null
+                                  ? Colors.amber.shade800
+                                  : AppTheme.agentPrimaryColor,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.edit_calendar_rounded,
+                          size: 16,
+                          color: selectedDate != null
+                              ? Colors.amber.shade700
+                              : AppTheme.agentPrimaryColor.withOpacity(0.6),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -931,6 +1074,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                                 amount: totalToCollect,
                                 productBoxRate: boxRate,
                                 productId: productId, // NEW: Link payment to product
+                                paymentDate: selectedDate,
                               );
 
                               // Update customer_products table

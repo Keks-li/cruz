@@ -703,7 +703,7 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                         crossAxisAlignment: CrossAxisAlignment.end,
                                         children: [
                                           Text(
-                                            'GHC ${cp.totalPrice?.toStringAsFixed(0) ?? '0'}',
+                                            'GHC ${(cp.boxesAssigned * (cp.pricePerBox ?? 0)).toStringAsFixed(0)}',
                                             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor),
                                           ),
                                         ],
@@ -738,7 +738,7 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'GHC ${cp.balanceDue.toStringAsFixed(0)}',
+                                        'GHC ${(cpBoxesLeft * (cp.pricePerBox ?? 0)).toStringAsFixed(0)}',
                                         style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppTheme.adminAccentAlert),
                                       ),
                                     ],
@@ -803,7 +803,7 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Text(
-                                      'GHC ${product?.totalPrice.toStringAsFixed(0)}',
+                                      'GHC ${(customer.totalBoxesAssigned * (product?.boxRate ?? 0)).toStringAsFixed(0)}',
                                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor),
                                     ),
                                   ],
@@ -826,7 +826,7 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'GHC ${customer.balanceDue.toStringAsFixed(0)}',
+                                      'GHC ${(boxesLeft * (product?.boxRate ?? 0)).toStringAsFixed(0)}',
                                       style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppTheme.adminAccentAlert),
                                     ),
                                   ],

@@ -37,14 +37,13 @@ class Product {
     );
   }
 
-  /// IMPORTANT: Do NOT include totalPrice when creating/updating products
-  /// It is a generated column in PostgreSQL
+  /// Calculate total_price before creating/updating products
   Map<String, dynamic> toJsonForInsert() {
     return {
       'name': name,
       'box_rate': boxRate,
       'total_boxes': totalBoxes,
-      // DO NOT send total_price - it's auto-calculated
+      'total_price': boxRate * totalBoxes,
     };
   }
 
@@ -53,7 +52,7 @@ class Product {
       if (name.isNotEmpty) 'name': name,
       'box_rate': boxRate,
       'total_boxes': totalBoxes,
-      // DO NOT send total_price - it's auto-calculated
+      'total_price': boxRate * totalBoxes,
     };
   }
 

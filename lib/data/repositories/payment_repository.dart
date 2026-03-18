@@ -15,18 +15,21 @@ class PaymentRepository {
     required double amount,
     required double productBoxRate,
     int? productId, // Nullable for legacy support
+    DateTime? paymentDate, // Optional: allows agents to backdate a payment
   }) async {
     try {
       // Calculate boxes collected
       final boxesCollected = (amount / productBoxRate).floor();
 
       // Insert the payment record WITH boxes_equivalent
+      // If paymentDate is supplied, override the DB-default timestamp
       final paymentData = {
         'customer_id': customerId,
         'agent_id': agentId,
         'amount_paid': amount,
         'boxes_equivalent': boxesCollected,
         if (productId != null) 'product_id': productId,
+        if (paymentDate != null) 'timestamp': paymentDate.toIso8601String(),
       };
 
       final paymentResponse = await _supabase

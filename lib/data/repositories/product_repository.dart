@@ -22,7 +22,7 @@ class ProductRepository {
     }
   }
 
-  /// Create a new product (DOES NOT send totalPrice - it's auto-calculated)
+  /// Create a new product
   Future<Product> createProduct({
     required String name,
     required double boxRate,
@@ -33,7 +33,7 @@ class ProductRepository {
         'name': name,
         'box_rate': boxRate,
         'total_boxes': totalBoxes,
-        // DO NOT include total_price - database calculates it
+        'total_price': boxRate * totalBoxes,
       };
 
       final response = await _supabase
@@ -60,7 +60,21 @@ class ProductRepository {
       if (name != null) data['name'] = name;
       if (boxRate != null) data['box_rate'] = boxRate;
       if (totalBoxes != null) data['total_boxes'] = totalBoxes;
-      // DO NOT include total_price - database calculates it
+
+      // If either boxRate or totalBoxes is updated, we should probably recalculate total_price
+      // But we need both boxRate and totalBoxes to calculate it.
+      // If the caller provides one but not the other, we'd need to fetch the existing product first.
+      // Alternatively, the caller could provide both. Let's fetch the existing product to be safe
+      // if we are updating either boxRate or totalBoxes.
+      
+      if (boxRate != null || totalBoxes != null) {
+        final currentProduct = await getProductById(id);
+        if (currentProduct != null) {
+          final newBoxRate = boxRate ?? currentProduct.boxRate;
+          final newTotalBoxes = totalBoxes ?? currentProduct.totalBoxes;
+          data['total_price'] = newBoxRate * newTotalBoxes;
+        }
+      }
 
       final response = await _supabase
           .from('products')

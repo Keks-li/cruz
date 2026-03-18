@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/profile.dart';
 
@@ -144,10 +145,16 @@ class AuthRepository {
   /// Send password reset email to the provided email address
   Future<void> sendPasswordResetEmail(String email) async {
     try {
-      await _supabase.auth.resetPasswordForEmail(
-        email,
-        redirectTo: 'https://cruz-lake.vercel.app/reset-password',
-      );
+      // For web, use the Vercel redirect URL
+      // For mobile/desktop, don't use redirectTo (handled by auth state listener)
+      if (kIsWeb) {
+        await _supabase.auth.resetPasswordForEmail(
+          email,
+          redirectTo: 'https://cruz-lake.vercel.app/reset-password',
+        );
+      } else {
+        await _supabase.auth.resetPasswordForEmail(email);
+      }
     } on AuthException catch (e) {
       throw Exception('Failed to send reset email: ${e.message}');
     } catch (e) {
