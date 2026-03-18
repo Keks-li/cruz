@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/responsive.dart';
 import '../../../core/theme.dart';
 import '../../../core/providers.dart';
 import '../../../providers/admin_providers.dart';
@@ -27,9 +28,10 @@ class ProductCatalogScreen extends ConsumerWidget {
       ),
       body: productsAsync.when(
         data: (products) {
-          return Column(
-            children: [
-              Padding(
+          return ResponsiveWrapper(
+            child: Column(
+              children: [
+                Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: ElevatedButton.icon(
                   onPressed: () => _showAddProductDialog(context, ref),
@@ -50,35 +52,65 @@ class ProductCatalogScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              Expanded(
-                child: products.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade200),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No products in catalog yet',
-                              style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w600),
-                            ),
-                          ],
+                Expanded(
+                  child: products.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade200),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No products in catalog yet',
+                                style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Builder(
+                          builder: (context) {
+                            final isDesktop = Responsive.isDesktop(context);
+                            if (isDesktop) {
+                              return GridView.builder(
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  childAspectRatio: 2.5,
+                                ),
+                                itemCount: products.length,
+                                itemBuilder: (context, index) => _buildProductCard(context, ref, products[index]),
+                              );
+                            }
+                            return ListView.separated(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                              itemCount: products.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 16),
+                              itemBuilder: (context, index) => _buildProductCard(context, ref, products[index]),
+                            );
+                          },
                         ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                        itemCount: products.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 16),
-                        itemBuilder: (context, index) {
-                          final product = products[index];
-                          final customerCountsAsync = ref.watch(productCustomerCountsProvider);
-                          final customerCount = customerCountsAsync.when(
-                            data: (counts) => counts[product.id] ?? 0,
-                            loading: () => 0,
-                            error: (_, __) => 0,
-                          );
-                          
-                          return InkWell(
+                ),
+              ],
+            ),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(child: Text('Error: $error')),
+      ),
+    );
+  }
+
+  Widget _buildProductCard(BuildContext context, WidgetRef ref, dynamic product) {
+    final customerCountsAsync = ref.watch(productCustomerCountsProvider);
+    final customerCount = customerCountsAsync.when(
+      data: (counts) => counts[product.id] ?? 0,
+      loading: () => 0,
+      error: (_, __) => 0,
+    );
+
+    return InkWell(
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
@@ -86,15 +118,15 @@ class ProductCatalogScreen extends ConsumerWidget {
                                 ),
                               );
                             },
-                            borderRadius: BorderRadius.circular(20),
-                            child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.grey.shade200),
-                              boxShadow: AppTheme.cardShadow,
-                            ),
-                            child: Padding(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: AppTheme.cardShadow,
+        ),
+        child: Padding(
                               padding: const EdgeInsets.all(16),
                               child: Row(
                                 children: [
@@ -195,17 +227,7 @@ class ProductCatalogScreen extends ConsumerWidget {
                                   ),
                                 ],
                               ),
-                            ),
-                          ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        ),
       ),
     );
   }

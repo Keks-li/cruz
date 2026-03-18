@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/responsive.dart';
 import '../../../core/theme.dart';
 import '../../../providers/admin_providers.dart';
 import '../agents/agent_management_screen.dart';
@@ -55,58 +56,111 @@ class _AdminNavShellState extends ConsumerState<AdminNavShell> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = Responsive.isDesktop(context);
+
     return Scaffold(
       backgroundColor: AppTheme.adminBackgroundColor,
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            top: BorderSide(color: Colors.grey.shade200, width: 1),
-          ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          elevation: 0,
-          selectedItemColor: AppTheme.adminPrimaryColor,
-          unselectedItemColor: AppTheme.adminTextColor.withOpacity(0.4),
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view_rounded), 
-              activeIcon: Icon(Icons.grid_view_rounded),
-              label: 'Stats'
+      body: isDesktop
+          ? Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: _onItemTapped,
+                  labelType: NavigationRailLabelType.all,
+                  backgroundColor: Colors.white,
+                  selectedIconTheme: const IconThemeData(color: AppTheme.adminPrimaryColor),
+                  unselectedIconTheme: IconThemeData(color: AppTheme.adminTextColor.withOpacity(0.4)),
+                  selectedLabelTextStyle: const TextStyle(color: AppTheme.adminPrimaryColor, fontWeight: FontWeight.w700, fontSize: 12),
+                  unselectedLabelTextStyle: TextStyle(color: AppTheme.adminTextColor.withOpacity(0.4), fontWeight: FontWeight.w500, fontSize: 12),
+                  destinations: const [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.grid_view_rounded),
+                      selectedIcon: Icon(Icons.grid_view_rounded),
+                      label: Text('Stats'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.groups_outlined),
+                      selectedIcon: Icon(Icons.groups_rounded),
+                      label: Text('Customers'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.badge_outlined),
+                      selectedIcon: Icon(Icons.badge_rounded),
+                      label: Text('Agents'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.inventory_2_outlined),
+                      selectedIcon: Icon(Icons.inventory_2_rounded),
+                      label: Text('Products'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.settings_outlined),
+                      selectedIcon: Icon(Icons.settings_rounded),
+                      label: Text('Settings'),
+                    ),
+                  ],
+                ),
+                VerticalDivider(thickness: 1, width: 1, color: Colors.grey.shade200),
+                Expanded(
+                  child: IndexedStack(
+                    index: _selectedIndex,
+                    children: _screens,
+                  ),
+                ),
+              ],
+            )
+          : IndexedStack(
+              index: _selectedIndex,
+              children: _screens,
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.groups_outlined),
-              activeIcon: Icon(Icons.groups_rounded),
-              label: 'Customers'
+      bottomNavigationBar: isDesktop
+          ? null
+          : Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade200, width: 1),
+                ),
+              ),
+              child: BottomNavigationBar(
+                currentIndex: _selectedIndex,
+                onTap: _onItemTapped,
+                type: BottomNavigationBarType.fixed,
+                backgroundColor: Colors.white,
+                elevation: 0,
+                selectedItemColor: AppTheme.adminPrimaryColor,
+                unselectedItemColor: AppTheme.adminTextColor.withOpacity(0.4),
+                selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.grid_view_rounded),
+                    activeIcon: Icon(Icons.grid_view_rounded),
+                    label: 'Stats'
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.groups_outlined),
+                    activeIcon: Icon(Icons.groups_rounded),
+                    label: 'Customers'
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.badge_outlined),
+                    activeIcon: Icon(Icons.badge_rounded),
+                    label: 'Agents'
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.inventory_2_outlined),
+                    activeIcon: Icon(Icons.inventory_2_rounded),
+                    label: 'Products'
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.settings_outlined),
+                    activeIcon: Icon(Icons.settings_rounded),
+                    label: 'Settings'
+                  ),
+                ],
+              ),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.badge_outlined),
-              activeIcon: Icon(Icons.badge_rounded),
-              label: 'Agents'
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.inventory_2_outlined),
-              activeIcon: Icon(Icons.inventory_2_rounded),
-              label: 'Products'
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              activeIcon: Icon(Icons.settings_rounded),
-              label: 'Settings'
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
