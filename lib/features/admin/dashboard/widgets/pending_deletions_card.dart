@@ -11,90 +11,69 @@ class PendingDeletionsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pendingDeletionsAsync = ref.watch(pendingDeletionsProvider);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: AppTheme.cardShadow,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return pendingDeletionsAsync.when(
+      data: (deletions) {
+        if (deletions.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: AppTheme.cardShadow,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppTheme.dangerColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.delete_sweep_rounded,
-                    color: AppTheme.dangerColor,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'PRODUCT DELETIONS',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.2,
-                          color: Colors.grey,
-                        ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.dangerColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Pending Approvals',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.adminTextColor,
-                        ),
+                      child: const Icon(
+                        Icons.delete_sweep_rounded,
+                        color: AppTheme.dangerColor,
+                        size: 24,
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            pendingDeletionsAsync.when(
-              data: (deletions) {
-                if (deletions.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.check_circle_outline_rounded,
-                            size: 48,
-                            color: Colors.grey.shade200,
-                          ),
-                          const SizedBox(height: 12),
                           Text(
-                            'No pending deletions',
+                            'PRODUCT DELETIONS',
                             style: TextStyle(
-                              color: Colors.grey.shade400,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Pending Approvals',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.adminTextColor,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  );
-                }
-
-                return ListView.separated(
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: deletions.length,
@@ -232,27 +211,14 @@ class PendingDeletionsCard extends ConsumerWidget {
                       ),
                     );
                   },
-                );
-              },
-              loading: () => const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(40),
-                  child: CircularProgressIndicator(color: AppTheme.dangerColor),
                 ),
-              ),
-              error: (error, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Text(
-                    'Error loading deletions: $error',
-                    style: TextStyle(color: AppTheme.dangerColor, fontSize: 12),
-                  ),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (error, _) => const SizedBox.shrink(),
     );
   }
 
