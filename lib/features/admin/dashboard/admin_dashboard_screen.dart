@@ -8,6 +8,7 @@ import 'widgets/revenue_card.dart';
 import 'widgets/stat_card.dart';
 import 'widgets/price_edit_approval_card.dart';
 import 'widgets/pending_payment_approvals_card.dart';
+import 'widgets/pending_deletions_card.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -78,6 +79,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
                   // Price Edit Approval Card
                   const PriceEditApprovalCard(),
+
+                  // Pending Product Deletions Card
+                  const PendingDeletionsCard(),
 
                   Builder(
                     builder: (context) {

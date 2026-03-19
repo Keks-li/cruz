@@ -77,6 +77,44 @@ class CustomerProductRepository {
     }
   }
 
+  /// Request product deletion (sets deletion_requested to true)
+  Future<void> requestDeletion(String customerProductId) async {
+    try {
+      await _supabase
+          .from('customer_products')
+          .update({'deletion_requested': true})
+          .eq('id', customerProductId);
+    } catch (e) {
+      throw Exception('Failed to request deletion: $e');
+    }
+  }
+
+  /// Fetch pending product deletion requests
+  Future<List<CustomerProduct>> fetchPendingDeletions() async {
+    try {
+      final response = await _supabase
+          .from('customer_products')
+          .select('''
+            *,
+            products!left(name, box_rate, total_price),
+            customers!inner(full_name, profiles!assigned_agent_id(full_name))
+          ''')
+          .eq('deletion_requested', true);
+
+      return (response as List).map((json) {
+        final cp = Map<String, dynamic>.from(json as Map<String, dynamic>);
+        if (cp['products'] != null) {
+          cp['product_name'] = cp['products']['name'];
+          cp['price_per_box'] = cp['products']['box_rate'];
+          cp['total_price'] = cp['products']['total_price'];
+        }
+        return CustomerProduct.fromJson(cp);
+      }).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch pending deletions: $e');
+    }
+  }
+
   /// Delete a customer product
   Future<void> deleteCustomerProduct(String customerProductId) async {
     try {

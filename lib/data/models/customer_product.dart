@@ -10,11 +10,14 @@ class CustomerProduct {
   final double balanceDue;
   final double registrationFeePaid;
   final DateTime createdAt;
+  final bool deletionRequested; // For Admin Approval
 
   // Joined fields
   final String? productName;
   final double? pricePerBox;
   final double? totalPrice;
+  final String? customerName; // From joins
+  final String? agentName; // From joins
 
   const CustomerProduct({
     required this.id,
@@ -26,9 +29,12 @@ class CustomerProduct {
     required this.balanceDue,
     required this.registrationFeePaid,
     required this.createdAt,
+    this.deletionRequested = false,
     this.productName,
     this.pricePerBox,
     this.totalPrice,
+    this.customerName,
+    this.agentName,
   });
 
   factory CustomerProduct.fromJson(Map<String, dynamic> json) {
@@ -51,6 +57,20 @@ class CustomerProduct {
       return double.tryParse(value.toString());
     }
 
+    String? getCustomerName(Map<String, dynamic> j) {
+      if (j['customers'] != null) {
+        return j['customers']['full_name'] as String?;
+      }
+      return null;
+    }
+
+    String? getAgentName(Map<String, dynamic> j) {
+      if (j['customers'] != null && j['customers']['profiles'] != null) {
+        return j['customers']['profiles']['full_name'] as String?;
+      }
+      return null;
+    }
+
     return CustomerProduct(
       id: json['id'] as String,
       customerId: json['customer_id'] as String,
@@ -61,9 +81,12 @@ class CustomerProduct {
       balanceDue: parseDoubleOrZero(json['balance_due']),
       registrationFeePaid: parseDoubleOrZero(json['registration_fee_paid']),
       createdAt: DateTime.parse(json['created_at'] as String),
+      deletionRequested: json['deletion_requested'] as bool? ?? false,
       productName: json['product_name'] as String?,
       pricePerBox: parseDoubleOrNull(json['price_per_box']),
       totalPrice: parseDoubleOrNull(json['total_price']),
+      customerName: getCustomerName(json),
+      agentName: getAgentName(json),
     );
   }
 

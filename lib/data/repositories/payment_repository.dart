@@ -217,14 +217,15 @@ class PaymentRepository {
     try {
       final response = await _supabase
           .from('payments')
-          .select('amount_paid');
+          .select('amount_paid')
+          .eq('is_approved', true);
 
       if (response is List && response.isEmpty) {
         return 0.0;
       }
 
       final total = (response as List)
-          .map((json) => (json['amount_paid'] as num).toDouble())
+          .map((json) => double.tryParse(json['amount_paid'].toString()) ?? 0.0)
           .reduce((a, b) => a + b);
 
       return total;
@@ -239,15 +240,16 @@ class PaymentRepository {
       final response = await _supabase
           .from('payments')
           .select('amount_paid')
-          .eq('agent_id', agentId);
+          .eq('agent_id', agentId)
+          .eq('is_approved', true);
 
       if (response is List && response.isEmpty) {
         return 0.0;
       }
 
       final total = (response as List)
-          .map((json) => (json['amount_paid'] as num).toDouble())
-          .reduce((a, b) => a + b);
+          .map((json) => double.tryParse(json['amount_paid'].toString()) ?? 0.0)
+          .fold<double>(0.0, (sum, amount) => sum + amount);
 
       return total;
     } catch (e) {
@@ -261,7 +263,8 @@ class PaymentRepository {
       final response = await _supabase
           .from('payments')
           .select('boxes_equivalent')
-          .eq('agent_id', agentId);
+          .eq('agent_id', agentId)
+          .eq('is_approved', true);
 
       if (response is List && response.isEmpty) {
         return 0.0;
@@ -269,7 +272,7 @@ class PaymentRepository {
 
       final total = (response as List)
           .where((json) => json['boxes_equivalent'] != null)
-          .map((json) => (json['boxes_equivalent'] as num).toDouble())
+          .map((json) => double.tryParse(json['boxes_equivalent'].toString()) ?? 0.0)
           .fold<double>(0.0, (sum, boxes) => sum + boxes);
 
       return total;
@@ -363,6 +366,7 @@ class PaymentRepository {
           .from('payments')
           .select('amount_paid')
           .eq('agent_id', agentId)
+          .eq('is_approved', true)
           .gte('timestamp', startOfDay.toIso8601String())
           .lte('timestamp', endOfDay.toIso8601String());
 
@@ -371,7 +375,7 @@ class PaymentRepository {
       }
 
       final total = (response as List)
-          .map((json) => (json['amount_paid'] as num).toDouble())
+          .map((json) => double.tryParse(json['amount_paid'].toString()) ?? 0.0)
           .fold<double>(0.0, (sum, amount) => sum + amount);
 
       return total;
@@ -390,6 +394,7 @@ class PaymentRepository {
           .from('payments')
           .select('''
             *,
+            products!left(name),
             customers!left(full_name, products!left(name))
           ''')
           .eq('agent_id', agentId)
@@ -402,7 +407,9 @@ class PaymentRepository {
             final payment = Map<String, dynamic>.from(json as Map<String, dynamic>);
             if (payment['customers'] != null) {
               payment['customer_name'] = payment['customers']['full_name'];
-              if (payment['customers']['products'] != null) {
+              if (payment['products'] != null) {
+                payment['product_name'] = payment['products']['name'];
+              } else if (payment['customers']['products'] != null) {
                 payment['product_name'] = payment['customers']['products']['name'];
               }
             }

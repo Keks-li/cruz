@@ -990,7 +990,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                   ),
                 ),
               ),
-          ] else if (boxesRemaining == 0)
+          ] else if (boxesRemaining == 0) ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -1005,8 +1005,33 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                   fontSize: 11,
                 ),
               ),
-            )
-          else // !isActive && boxesRemaining > 0
+            ),
+            const SizedBox(width: 8),
+            // Delete product logic even if paid
+            if (customerProductId != null)
+              InkWell(
+                onTap: () => _showDeleteProductDialog(
+                  customerProductId: customerProductId,
+                  customerId: customerId,
+                  productId: productId is int
+                      ? productId
+                      : int.parse(productId.toString()),
+                  productName: productName,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.dangerColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: AppTheme.dangerColor,
+                    size: 16,
+                  ),
+                ),
+              ),
+          ] else // !isActive && boxesRemaining > 0
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -1507,7 +1532,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'This will permanently delete this product ("$productName") and ALL its associated payment history.',
+              'This will request Admin approval to permanently delete this product ("$productName") and its payment history.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -1534,11 +1559,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                     customerProductRepositoryProvider,
                   );
 
-                  await customerProductRepo.deleteCustomerProductCascade(
-                    customerProductId,
-                    customerId,
-                    productId,
-                  );
+                  await customerProductRepo.requestDeletion(customerProductId);
 
                   // Dismiss loading indicator
                   if (context.mounted) Navigator.of(context).pop();
@@ -1548,13 +1569,12 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                   // Refresh data
                   ref.invalidate(assignedCustomersProvider);
                   ref.invalidate(customerProductsProvider(customerId));
-                  ref.invalidate(agentPaymentsProvider);
 
                   if (this.context.mounted) {
                     ScaffoldMessenger.of(this.context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          'Product $productName deleted successfully',
+                          'Deletion requested for $productName. Awaiting Admin approval.',
                         ),
                         backgroundColor: Colors.grey.shade800,
                         behavior: SnackBarBehavior.floating,
