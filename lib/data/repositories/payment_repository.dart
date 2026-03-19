@@ -106,6 +106,14 @@ class PaymentRepository {
   }
 
   /// Approve a pending backdated payment, updating customer balances accordingly
+  Future<void> rejectPayment(String paymentId) async {
+    try {
+      await _supabase.from('payments').delete().eq('id', paymentId);
+    } catch (e) {
+      throw Exception('Failed to reject payment: $e');
+    }
+  }
+
   Future<void> approvePayment(String paymentId) async {
     try {
       // Fetch the unapproved payment details

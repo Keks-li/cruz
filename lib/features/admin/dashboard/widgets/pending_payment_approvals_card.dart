@@ -175,34 +175,63 @@ class PendingPaymentApprovalsCard extends ConsumerWidget {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: () => _handleApprove(
-                                context,
-                                ref,
-                                payment.id,
-                                payment.amountPaid,
-                                dateStr,
-                                payment.customerName ?? 'Unknown',
-                              ),
-                              icon: const Icon(
-                                Icons.check_circle_rounded,
-                                size: 18,
-                              ),
-                              label: const Text('Review & Approve'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange.shade600,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _handleApprove(
+                                    context,
+                                    ref,
+                                    payment.id,
+                                    payment.amountPaid,
+                                    dateStr,
+                                    payment.customerName ?? 'Unknown',
+                                  ),
+                                  icon: const Icon(
+                                    Icons.check_circle_rounded,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Approve'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange.shade600,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 0,
+                                  ),
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
                               ),
-                            ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _handleReject(
+                                    context,
+                                    ref,
+                                    payment.id,
+                                  ),
+                                  icon: const Icon(
+                                    Icons.cancel_rounded,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Reject'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.dangerColor,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -325,6 +354,85 @@ class PendingPaymentApprovalsCard extends ConsumerWidget {
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Error: ${e.toString().replaceAll("Exception: ", "")}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              backgroundColor: AppTheme.dangerColor,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _handleReject(
+    BuildContext context,
+    WidgetRef ref,
+    String paymentId,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Reject Backdated Payment',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        content: const Text(
+          'Are you sure you want to reject this backdated payment?',
+          style: TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.dangerColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        final paymentRepo = ref.read(paymentRepositoryProvider);
+        await paymentRepo.rejectPayment(paymentId);
+
+        // Refresh the pending requests and dashboard stats
+        ref.invalidate(pendingPaymentApprovalsProvider);
+        ref.invalidate(dashboardStatsProvider);
+        ref.invalidate(dailyCollectionsProvider);
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Payment rejected successfully',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              backgroundColor: Colors.orange,
               behavior: SnackBarBehavior.floating,
             ),
           );
