@@ -177,3 +177,9 @@ final allEditRequestsProvider = FutureProvider<List<PaymentEditRequest>>((ref) a
   final requestRepo = ref.watch(paymentEditRequestRepositoryProvider);
   return await requestRepo.fetchAllRequests();
 });
+
+/// Provider for pending product deletions (admin approval)
+final pendingDeletionsProvider = FutureProvider<List<dynamic>>((ref) async {
+  final customerProductRepo = ref.watch(customerProductRepositoryProvider);
+  return await customerProductRepo.fetchPendingDeletions();
+});
