@@ -37,6 +37,7 @@ class _NewRegistrationScreenState extends ConsumerState<NewRegistrationScreen> {
       );
       return;
     }
+    if (_isLoading) return;
 
     setState(() => _isLoading = true);
 

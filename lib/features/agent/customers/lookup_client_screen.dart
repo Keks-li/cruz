@@ -311,6 +311,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                     onPressed: isLoading
                         ? null
                         : () async {
+                            if (isLoading) return;
                             setState(() => isLoading = true);
 
                             try {
@@ -1328,6 +1329,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                     onPressed: isLoading
                         ? null
                         : () async {
+                            if (isLoading) return;
                             setState(() => isLoading = true);
 
                             try {

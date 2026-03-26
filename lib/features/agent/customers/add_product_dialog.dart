@@ -256,6 +256,7 @@ class _AddProductToCustomerDialogState extends ConsumerState<AddProductToCustome
 
   Future<void> _addProduct() async {
     if (_selectedProductId == null || _selectedProduct == null) return;
+    if (_isLoading) return;
 
     setState(() => _isLoading = true);
 
