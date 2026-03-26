@@ -289,6 +289,7 @@ class ProductCatalogScreen extends ConsumerWidget {
               onPressed: isLoading
                   ? null
                   : () async {
+                      if (isLoading) return;
                       if (nameController.text.isEmpty ||
                           boxRateController.text.isEmpty ||
                           totalBoxesController.text.isEmpty) {
@@ -422,6 +423,7 @@ class ProductCatalogScreen extends ConsumerWidget {
               onPressed: isLoading
                   ? null
                   : () async {
+                      if (isLoading) return;
                       setState(() => isLoading = true);
 
                       final boxRate = double.tryParse(boxRateController.text);
@@ -587,6 +589,7 @@ class ProductCatalogScreen extends ConsumerWidget {
               ElevatedButton(
                 onPressed: extraBoxes > 0 && !isLoading
                     ? () async {
+                        if (isLoading) return;
                         setState(() => isLoading = true);
                         try {
                           final productRepo = ref.read(productRepositoryProvider);

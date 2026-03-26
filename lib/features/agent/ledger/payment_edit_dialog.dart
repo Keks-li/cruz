@@ -205,6 +205,7 @@ class _PaymentEditDialogState extends State<PaymentEditDialog> {
 
   Future<void> _submitRequest() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_isLoading) return;
 
     setState(() => _isLoading = true);
 
