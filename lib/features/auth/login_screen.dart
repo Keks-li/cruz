@@ -246,8 +246,226 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  Widget _buildBrandingSection({bool isDesktop = false}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.shield_moon,
+          size: 64,
+          color: isDesktop ? Colors.white : primaryNavy,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'CRUZARO ENT',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: isDesktop ? Colors.white : primaryNavy,
+            letterSpacing: 1.0,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Secure Access Portal',
+          style: TextStyle(
+            fontSize: 16,
+            color: isDesktop ? Colors.grey.shade300 : Colors.grey,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginForm() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // User Type Toggle (Styled for Navy theme)
+        Container(
+          decoration: BoxDecoration(
+            color: inputBg,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.all(4),
+          child: Row(
+            children: [
+              Expanded(child: _buildToggleItem('AGENT', 0)),
+              Expanded(child: _buildToggleItem('ADMIN', 1)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Input Fields
+        TextField(
+          controller: _emailController,
+          style: const TextStyle(color: textSlate),
+          decoration: InputDecoration(
+            hintText: 'Email Address',
+            filled: true,
+            fillColor: Colors.white,
+            prefixIcon: const Icon(Icons.email_outlined, color: primaryNavy),
+            border: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+          ),
+          keyboardType: TextInputType.emailAddress,
+          enabled: !_isLoading,
+        ),
+        const SizedBox(height: 20),
+        TextField(
+          controller: _passwordController,
+          obscureText: true,
+          style: const TextStyle(color: textSlate),
+          decoration: InputDecoration(
+            hintText: 'Password',
+            filled: true,
+            fillColor: Colors.white,
+            prefixIcon: const Icon(
+              Icons.lock_outline_rounded,
+              color: primaryNavy,
+            ),
+            border: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+          ),
+          enabled: !_isLoading,
+          onSubmitted: (_) => _handleLogin(),
+        ),
+        const SizedBox(height: 16),
+
+        // Forgot Password Link
+        Align(
+          alignment: Alignment.centerRight,
+          child: GestureDetector(
+            onTap: _isLoading
+                ? null
+                : () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ForgotPasswordScreen(),
+                      ),
+                    );
+                  },
+            child: Text(
+              'Forgot Password?',
+              style: TextStyle(
+                color: _isLoading ? Colors.grey.shade400 : primaryNavy,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Login Button
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _handleLogin,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryNavy,
+              foregroundColor: Colors.white,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text(
+                    'LOGIN',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Sign Up Link
+        GestureDetector(
+          onTap: _isLoading ? null : _showSignUpDialog,
+          child: RichText(
+            text: const TextSpan(
+              style: TextStyle(fontSize: 14),
+              children: [
+                TextSpan(
+                  text: 'New Agent? ',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                TextSpan(
+                  text: 'Sign Up Here',
+                  style: TextStyle(
+                    color: primaryNavy,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDesktop = Responsive.isDesktop(context);
+
+    if (isDesktop) {
+      return Scaffold(
+        backgroundColor: bgColor,
+        body: Row(
+          children: [
+            Expanded(
+              child: Container(
+                color: primaryNavy,
+                child: Center(child: _buildBrandingSection(isDesktop: true)),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 450),
+                  padding: const EdgeInsets.symmetric(horizontal: 48.0),
+                  child: _buildLoginForm(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
@@ -276,169 +494,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Branding Section
-                      const Icon(Icons.shield_moon, size: 64, color: primaryNavy),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'CRUZARO ENT',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: primaryNavy,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Secure Access Portal',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
+                      _buildBrandingSection(isDesktop: false),
                       const SizedBox(height: 32),
-
-                      // User Type Toggle (Styled for Navy theme)
-                      Container(
-                        decoration: BoxDecoration(
-                          color: inputBg,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.all(4),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildToggleItem('AGENT', 0),
-                            ),
-                            Expanded(
-                              child: _buildToggleItem('ADMIN', 1),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Input Fields
-                      TextField(
-                        controller: _emailController,
-                        style: const TextStyle(color: textSlate),
-                        decoration: InputDecoration(
-                          hintText: 'Email Address',
-                          filled: true,
-                          fillColor: inputBg,
-                          prefixIcon: const Icon(Icons.email_outlined, color: primaryNavy),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide.none,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        enabled: !_isLoading,
-                      ),
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        style: const TextStyle(color: textSlate),
-                        decoration: InputDecoration(
-                          hintText: 'Password',
-                          filled: true,
-                          fillColor: inputBg,
-                          prefixIcon: const Icon(Icons.lock_outline_rounded, color: primaryNavy),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide.none,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        ),
-                        enabled: !_isLoading,
-                        onSubmitted: (_) => _handleLogin(),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Forgot Password Link
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: GestureDetector(
-                          onTap: _isLoading
-                              ? null
-                              : () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => const ForgotPasswordScreen(),
-                                    ),
-                                  );
-                                },
-                          child: Text(
-                            'Forgot Password?',
-                            style: TextStyle(
-                              color: _isLoading ? Colors.grey.shade400 : primaryNavy,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Login Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _handleLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryNavy,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  ),
-                                )
-                              : const Text(
-                                  'LOGIN',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Sign Up Link
-                      GestureDetector(
-                        onTap: _isLoading ? null : _showSignUpDialog,
-                        child: RichText(
-                          text: const TextSpan(
-                            style: TextStyle(fontSize: 14),
-                            children: [
-                              TextSpan(
-                                text: 'New Agent? ',
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                              TextSpan(
-                                text: 'Sign Up Here',
-                                style: TextStyle(
-                                  color: primaryNavy,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      _buildLoginForm(),
                     ],
                   ),
                 ),
