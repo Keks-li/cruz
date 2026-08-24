@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/constants.dart';
+import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../data/models/profile.dart';

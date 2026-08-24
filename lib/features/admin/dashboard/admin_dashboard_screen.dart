@@ -38,28 +38,84 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     final statsAsync = ref.watch(dashboardStatsProvider);
     final dailyCollectionsAsync = ref.watch(dailyCollectionsProvider(_selectedDate));
+    final cyclesAsync = ref.watch(cyclesListProvider);
+    final currentCycleAsync = ref.watch(currentAdminCycleProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.adminBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Admin Dashboard',
-          style: TextStyle(
-            color: AppTheme.adminTextColor,
-            fontWeight: FontWeight.w800,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Admin Dashboard',
+              style: TextStyle(
+                color: AppTheme.adminTextColor,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            currentCycleAsync.when(
+              data: (cycle) => Text(
+                cycle != null ? '${cycle.name}${cycle.isActive ? " (Active Cycle)" : ""}' : 'No Cycle Selected',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: cycle?.isActive == true ? AppTheme.adminAccentRevenue : Colors.grey.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+          ],
         ),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.adminPrimaryColor.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.notifications_none_rounded, color: AppTheme.adminPrimaryColor, size: 22),
+          cyclesAsync.when(
+            data: (cycles) {
+              final currentCycle = currentCycleAsync.value;
+              return Container(
+                margin: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.adminPrimaryColor.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.adminPrimaryColor.withOpacity(0.15)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int?>(
+                    value: currentCycle?.id,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: AppTheme.adminPrimaryColor),
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: AppTheme.adminPrimaryColor, fontSize: 13),
+                    items: cycles.map((c) {
+                      return DropdownMenuItem<int?>(
+                        value: c.id,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              c.isActive ? Icons.play_circle_filled_rounded : Icons.history_rounded,
+                              size: 16,
+                              color: c.isActive ? AppTheme.adminAccentRevenue : Colors.grey,
+                            ),
+                            const SizedBox(width: 6),
+                            Text('${c.name}${c.isActive ? ' (Active)' : ''}'),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (newId) {
+                      ref.read(selectedCycleIdProvider.notifier).state = newId;
+                      ref.invalidate(dashboardStatsProvider);
+                      ref.invalidate(allCustomersProvider);
+                    },
+                  ),
+                ),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
           ),
         ],
       ),

@@ -5,6 +5,7 @@ import '../../../core/theme.dart';
 import '../../../core/providers.dart';
 import '../../../providers/admin_providers.dart';
 import '../../../data/models/zone.dart';
+import '../../../data/models/cycle.dart';
 import '../../auth/login_screen.dart';
 
 class SystemSettingsScreen extends ConsumerStatefulWidget {
@@ -17,12 +18,131 @@ class SystemSettingsScreen extends ConsumerStatefulWidget {
 class _SystemSettingsScreenState extends ConsumerState<SystemSettingsScreen> {
   final _regFeeController = TextEditingController();
   final _zoneController = TextEditingController();
+  final _cycleNameController = TextEditingController();
 
   @override
   void dispose() {
     _regFeeController.dispose();
     _zoneController.dispose();
+    _cycleNameController.dispose();
     super.dispose();
+  }
+
+  void _showCreateCycleDialog() {
+    _cycleNameController.clear();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('New Business Cycle', style: TextStyle(fontWeight: FontWeight.w800)),
+        content: TextField(
+          controller: _cycleNameController,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: 'Cycle Name',
+            hintText: 'e.g. Cycle 3',
+            filled: true,
+            fillColor: AppTheme.adminInputFill,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.adminPrimaryColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              final name = _cycleNameController.text.trim();
+              if (name.isEmpty) return;
+              try {
+                await ref.read(cycleRepositoryProvider).createCycle(name);
+                ref.invalidate(cyclesListProvider);
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Cycle "$name" created'),
+                      backgroundColor: AppTheme.adminAccentRevenue,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.toString().replaceAll('Exception: ', '')),
+                      backgroundColor: AppTheme.adminAccentAlert,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCloseCycleDialog(Cycle cycle) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Close Cycle', style: TextStyle(fontWeight: FontWeight.w800)),
+        content: Text(
+          'Close "${cycle.name}"?\n\nAgents will no longer be able to record new payments until another cycle is activated.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.adminAccentAlert,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              try {
+                await ref.read(cycleRepositoryProvider).closeCycle(cycle.id);
+                ref.invalidate(cyclesListProvider);
+                ref.invalidate(activeCycleProvider);
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('"${cycle.name}" has been closed'),
+                      backgroundColor: Colors.orange.shade700,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.toString().replaceAll('Exception: ', '')),
+                      backgroundColor: AppTheme.adminAccentAlert,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Close Cycle'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showEditZoneDialog(Zone zone) {
@@ -139,6 +259,7 @@ class _SystemSettingsScreenState extends ConsumerState<SystemSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final zonesAsync = ref.watch(zonesListProvider);
+    final cyclesAsync = ref.watch(cyclesListProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.adminBackgroundColor,
@@ -245,6 +366,185 @@ class _SystemSettingsScreenState extends ConsumerState<SystemSettingsScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: const Text('UPDATE FEE', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Business Cycles Card ──────────────────────────────
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: AppTheme.cardShadow,
+                border: Border.all(color: Colors.grey.shade100),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'BUSINESS CYCLES',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: _showCreateCycleDialog,
+                          icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+                          label: const Text('New Cycle', style: TextStyle(fontWeight: FontWeight.w700)),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppTheme.adminPrimaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    cyclesAsync.when(
+                      data: (cycles) {
+                        if (cycles.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Text('No cycles yet', style: TextStyle(color: Colors.grey)),
+                          );
+                        }
+                        return Column(
+                          children: cycles.map((cycle) {
+                            final isActive = cycle.isActive;
+                            final isClosed = !isActive && cycle.endedAt != null;
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: isActive
+                                    ? AppTheme.adminAccentRevenue.withOpacity(0.08)
+                                    : AppTheme.adminInputFill,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isActive
+                                      ? AppTheme.adminAccentRevenue.withOpacity(0.4)
+                                      : Colors.transparent,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isActive
+                                        ? Icons.play_circle_filled_rounded
+                                        : isClosed
+                                            ? Icons.lock_rounded
+                                            : Icons.circle_outlined,
+                                    color: isActive
+                                        ? AppTheme.adminAccentRevenue
+                                        : Colors.grey.shade400,
+                                    size: 22,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          cycle.name,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: isActive
+                                                ? AppTheme.adminTextColor
+                                                : Colors.grey.shade600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: isActive
+                                                    ? AppTheme.adminAccentRevenue
+                                                    : isClosed
+                                                        ? Colors.grey.shade400
+                                                        : Colors.orange.shade300,
+                                                borderRadius: BorderRadius.circular(20),
+                                              ),
+                                              child: Text(
+                                                isActive ? 'ACTIVE' : isClosed ? 'CLOSED' : 'INACTIVE',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w800,
+                                                  letterSpacing: 0.5,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Actions
+                                  if (!isActive && !isClosed)
+                                    TextButton(
+                                      onPressed: () async {
+                                        try {
+                                          await ref
+                                              .read(cycleRepositoryProvider)
+                                              .setActiveCycle(cycle.id);
+                                          ref.invalidate(cyclesListProvider);
+                                          ref.invalidate(activeCycleProvider);
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text('"${cycle.name}" is now active'),
+                                                backgroundColor: AppTheme.adminAccentRevenue,
+                                              ),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text(e.toString().replaceAll('Exception: ', '')),
+                                                backgroundColor: AppTheme.adminAccentAlert,
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      },
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppTheme.adminPrimaryColor,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      ),
+                                      child: const Text('Activate', style: TextStyle(fontWeight: FontWeight.w700)),
+                                    ),
+                                  if (isActive)
+                                    TextButton(
+                                      onPressed: () => _showCloseCycleDialog(cycle),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppTheme.adminAccentAlert,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      ),
+                                      child: const Text('Close', style: TextStyle(fontWeight: FontWeight.w700)),
+                                    ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (e, _) => Text('Error: $e', style: const TextStyle(color: AppTheme.adminAccentAlert)),
                     ),
                   ],
                 ),

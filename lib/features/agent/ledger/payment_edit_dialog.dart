@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme.dart';
-import '../../../core/providers.dart';
-import '../../../providers/auth_provider.dart';
 import '../../../data/models/payment.dart';
 
 /// Dialog for agents to request a payment edit (Point 8)

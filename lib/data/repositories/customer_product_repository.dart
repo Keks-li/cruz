@@ -6,17 +6,22 @@ class CustomerProductRepository {
 
   CustomerProductRepository(this._supabase);
 
-  /// Fetch all products assigned to a customer with product details
-  Future<List<CustomerProduct>> fetchProductsByCustomer(String customerId) async {
+  /// Fetch all products assigned to a customer with product details, optionally filtered by cycle
+  Future<List<CustomerProduct>> fetchProductsByCustomer(String customerId, {int? cycleId}) async {
     try {
-      final response = await _supabase
+      var query = _supabase
           .from('customer_products')
           .select('''
             *,
             products!left(name, box_rate, total_price)
           ''')
-          .eq('customer_id', customerId)
-          .order('created_at', ascending: false);
+          .eq('customer_id', customerId);
+
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query.order('created_at', ascending: false);
 
       return (response as List)
           .map((json) {
@@ -41,6 +46,7 @@ class CustomerProductRepository {
     required int boxesAssigned,
     required double balanceDue,
     required double registrationFeePaid,
+    required int cycleId, // REQUIRED: active cycle id
   }) async {
     try {
       final data = {
@@ -51,6 +57,7 @@ class CustomerProductRepository {
         'balance_due': balanceDue,
         'registration_fee_paid': registrationFeePaid,
         'is_active': true,
+        'cycle_id': cycleId,
       };
 
       final response = await _supabase
@@ -97,7 +104,7 @@ class CustomerProductRepository {
           .select('''
             *,
             products!left(name, box_rate, total_price),
-            customers!inner(full_name, profiles!assigned_agent_id(full_name))
+            customers!left(full_name, profiles!assigned_agent_id!left(full_name))
           ''')
           .eq('deletion_requested', true);
 
@@ -150,27 +157,38 @@ class CustomerProductRepository {
     }
   }
 
-  /// Get count of active customers for a product (Point 5: Product Dashboard badge)
-  Future<int> getActiveCustomerCount(int productId) async {
+  /// Get count of active customers for a product, optionally filtered by cycle
+  Future<int> getActiveCustomerCount(int productId, {int? cycleId}) async {
     try {
-      final response = await _supabase
+      var query = _supabase
           .from('customer_products')
           .select('id')
           .eq('product_id', productId)
           .eq('is_active', true);
 
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query;
       return (response as List).length;
     } catch (e) {
       throw Exception('Failed to get active customer count: $e');
     }
   }
 
-  /// Get all active customer counts for all products (batch operation for Point 5)
-  Future<Map<int, int>> getAllProductCustomerCounts() async {
+  /// Get all active customer counts for all products, optionally filtered by cycle
+  Future<Map<int, int>> getAllProductCustomerCounts({int? cycleId}) async {
     try {
-      final response = await _supabase
+      var query = _supabase
           .from('customer_products')
           .select('product_id');
+
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query;
 
       final counts = <int, int>{};
       for (final row in response as List) {
@@ -230,16 +248,22 @@ class CustomerProductRepository {
     }
   }
 
-  /// Fetch all products for customers assigned to a specific agent (includes all, even completed)
-  Future<List<CustomerProduct>> fetchProductsByAgent(String agentId) async {
+  /// Fetch all products for customers assigned to a specific agent, optionally filtered by cycle
+  Future<List<CustomerProduct>> fetchProductsByAgent(String agentId, {int? cycleId}) async {
     try {
-      final response = await _supabase
+      var query = _supabase
           .from('customer_products')
           .select('''
             *,
             customers!inner(assigned_agent_id)
           ''')
           .eq('customers.assigned_agent_id', agentId);
+
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query;
 
       return (response as List)
           .map((json) => CustomerProduct.fromJson(json as Map<String, dynamic>))

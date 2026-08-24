@@ -43,21 +43,25 @@ class _NewRegistrationScreenState extends ConsumerState<NewRegistrationScreen> {
 
     try {
       final customerRepo = ref.read(customerRepositoryProvider);
-      final settingsRepo = ref.read(settingsRepositoryProvider);
       final currentUser = await ref.read(currentUserProvider.future);
+      final activeCycle = await ref.read(agentActiveCycleProvider.future);
 
       if (currentUser == null) {
         throw Exception('Not logged in');
       }
 
-      // Create customer without product (product added separately later)
-      // Registration fee is 0 initially because it's calculated per product assigned
+      if (activeCycle == null) {
+        throw Exception('No active business cycle. Please contact an admin.');
+      }
+
+      // Create customer — tagged to the currently active cycle
       await customerRepo.createCustomer(
         fullName: _fullNameController.text.trim(),
         phone: _phoneController.text.trim(),
         zoneId: _selectedZoneId!,
         assignedAgentId: currentUser.id,
         registrationFeePaid: 0,
+        cycleId: activeCycle.id,
       );
 
       if (mounted) {
@@ -73,8 +77,8 @@ class _NewRegistrationScreenState extends ConsumerState<NewRegistrationScreen> {
         ref.invalidate(allCustomersProvider);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Customer registered successfully!'),
+          SnackBar(
+            content: Text('Customer registered under ${activeCycle.name}!'),
             backgroundColor: AppTheme.secondaryColor,
           ),
         );
@@ -98,18 +102,39 @@ class _NewRegistrationScreenState extends ConsumerState<NewRegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     final zonesAsync = ref.watch(zonesProvider);
+    final activeCycleAsync = ref.watch(agentActiveCycleProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.agentBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'New Registration',
-          style: TextStyle(
-            color: AppTheme.agentTextColor,
-            fontWeight: FontWeight.w800,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'New Registration',
+              style: TextStyle(
+                color: AppTheme.agentTextColor,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            activeCycleAsync.when(
+              data: (cycle) => Text(
+                cycle != null ? cycle.name : 'No active cycle',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: cycle != null
+                      ? AppTheme.agentPrimaryColor
+                      : AppTheme.dangerColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+          ],
         ),
       ),
       body: SingleChildScrollView(

@@ -125,7 +125,7 @@ class _AddProductToCustomerDialogState extends ConsumerState<AddProductToCustome
                     return DropdownMenuItem(
                       value: product.id,
                       child: Text(
-                        '${product.name} - GHC ${product.boxRate.toStringAsFixed(2)}/box',
+                        '${product.displayName} - GHC ${product.boxRate.toStringAsFixed(2)}/box',
                         overflow: TextOverflow.ellipsis,
                       ),
                     );
@@ -275,12 +275,18 @@ class _AddProductToCustomerDialogState extends ConsumerState<AddProductToCustome
         throw Exception('Customer already has this product');
       }
 
+      final activeCycle = await ref.read(agentActiveCycleProvider.future);
+      if (activeCycle == null) {
+        throw Exception('No active business cycle. Please contact an admin.');
+      }
+
       await customerProductRepo.addProductToCustomer(
         customerId: widget.customer.id,
         productId: _selectedProductId!,
         boxesAssigned: _selectedProduct!.totalBoxes,
         balanceDue: _selectedProduct!.totalPrice,
         registrationFeePaid: regFee,
+        cycleId: activeCycle.id,
       );
 
       // Refresh customer data and customer products

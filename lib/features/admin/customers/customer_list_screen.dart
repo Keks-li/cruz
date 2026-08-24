@@ -28,19 +28,86 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
   @override
   Widget build(BuildContext context) {
     final customersAsync = ref.watch(allCustomersProvider);
+    final cyclesAsync = ref.watch(cyclesListProvider);
+    final currentCycleAsync = ref.watch(currentAdminCycleProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.adminBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Customers',
-          style: TextStyle(
-            color: AppTheme.adminTextColor,
-            fontWeight: FontWeight.w800,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Customers',
+              style: TextStyle(
+                color: AppTheme.adminTextColor,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            currentCycleAsync.when(
+              data: (cycle) => Text(
+                cycle != null ? '${cycle.name}${cycle.isActive ? " (Active)" : ""}' : 'All Cycles',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: cycle?.isActive == true ? AppTheme.adminAccentRevenue : Colors.grey.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+          ],
         ),
+        actions: [
+          cyclesAsync.when(
+            data: (cycles) {
+              final currentCycle = currentCycleAsync.value;
+              return Container(
+                margin: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.adminPrimaryColor.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.adminPrimaryColor.withOpacity(0.15)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int?>(
+                    value: currentCycle?.id,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: AppTheme.adminPrimaryColor),
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: AppTheme.adminPrimaryColor, fontSize: 13),
+                    items: cycles.map((c) {
+                      return DropdownMenuItem<int?>(
+                        value: c.id,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              c.isActive ? Icons.play_circle_filled_rounded : Icons.history_rounded,
+                              size: 16,
+                              color: c.isActive ? AppTheme.adminAccentRevenue : Colors.grey,
+                            ),
+                            const SizedBox(width: 6),
+                            Text('${c.name}${c.isActive ? ' (Active)' : ''}'),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (newId) {
+                      ref.read(selectedCycleIdProvider.notifier).state = newId;
+                      ref.invalidate(allCustomersProvider);
+                      ref.invalidate(dashboardStatsProvider);
+                    },
+                  ),
+                ),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
       ),
       body: ResponsiveWrapper(
         child: Column(

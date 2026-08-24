@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme.dart';
 import '../../../providers/agent_providers.dart';
-import '../../../providers/admin_providers.dart';
 import '../dashboard/agent_dashboard_screen.dart';
 import '../customers/lookup_client_screen.dart';
 import '../ledger/collection_ledger_screen.dart';
@@ -30,6 +29,9 @@ class _AgentNavShellState extends ConsumerState<AgentNavShell> {
     
     setState(() => _selectedIndex = index);
 
+    // Invalidate active cycle to pick up any changes made by admin
+    ref.invalidate(agentActiveCycleProvider);
+
     // Force refresh data when switching tabs to ensure freshness
     switch (index) {
       case 0: // Dashboard
@@ -39,11 +41,14 @@ class _AgentNavShellState extends ConsumerState<AgentNavShell> {
         ref.invalidate(agentCustomerCountProvider);
         ref.invalidate(agentDailyPaymentsProvider);
         break;
+      case 1: // Lookup
+        ref.invalidate(assignedCustomersProvider);
+        break;
       case 2: // Ledger
         ref.invalidate(agentPaymentsProvider);
         break;
-      case 1: // Lookup
-        ref.invalidate(assignedCustomersProvider);
+      case 3: // Register
+        ref.invalidate(zonesProvider);
         break;
     }
   }

@@ -6,13 +6,14 @@ class ProductRepository {
 
   ProductRepository(this._supabase);
 
-  /// Fetch all products (reads totalPrice from DB)
-  Future<List<Product>> fetchProducts() async {
+  /// Fetch all products, optionally filtered by cycle
+  Future<List<Product>> fetchProducts({int? cycleId}) async {
     try {
-      final response = await _supabase
-          .from('products')
-          .select()
-          .order('name', ascending: true);
+      var query = _supabase.from('products').select();
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+      final response = await query.order('name', ascending: true);
 
       return (response as List)
           .map((json) => Product.fromJson(json as Map<String, dynamic>))
@@ -22,19 +23,27 @@ class ProductRepository {
     }
   }
 
-  /// Create a new product
+  /// Create a new product (single or double), optionally linked to a cycle
   Future<Product> createProduct({
     required String name,
+    String? code,
+    String type = 'single',
     required double boxRate,
     required int totalBoxes,
+    int? cycleId,
   }) async {
     try {
-      final data = {
+      final data = <String, dynamic>{
         'name': name,
+        'code': code ?? name,
+        'type': type,
         'box_rate': boxRate,
         'total_boxes': totalBoxes,
         'total_price': boxRate * totalBoxes,
       };
+      if (cycleId != null) {
+        data['cycle_id'] = cycleId;
+      }
 
       final response = await _supabase
           .from('products')
@@ -52,21 +61,21 @@ class ProductRepository {
   Future<Product> updateProduct({
     required String id,
     String? name,
+    String? code,
+    String? type,
     double? boxRate,
     int? totalBoxes,
+    int? cycleId,
   }) async {
     try {
       final data = <String, dynamic>{};
       if (name != null) data['name'] = name;
+      if (code != null) data['code'] = code;
+      if (type != null) data['type'] = type;
+      if (cycleId != null) data['cycle_id'] = cycleId;
       if (boxRate != null) data['box_rate'] = boxRate;
       if (totalBoxes != null) data['total_boxes'] = totalBoxes;
 
-      // If either boxRate or totalBoxes is updated, we should probably recalculate total_price
-      // But we need both boxRate and totalBoxes to calculate it.
-      // If the caller provides one but not the other, we'd need to fetch the existing product first.
-      // Alternatively, the caller could provide both. Let's fetch the existing product to be safe
-      // if we are updating either boxRate or totalBoxes.
-      
       if (boxRate != null || totalBoxes != null) {
         final currentProduct = await getProductById(id);
         if (currentProduct != null) {

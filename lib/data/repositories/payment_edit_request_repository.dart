@@ -13,9 +13,9 @@ class PaymentEditRequestRepository {
           .from('payment_edit_requests')
           .select('''
             *,
-            profiles!agent_id(full_name),
-            payments!payment_id(
-              customers!customer_id(full_name)
+            profiles!agent_id!left(full_name),
+            payments!payment_id!left(
+              customers!customer_id!left(full_name)
             )
           ''')
           .eq('status', 'pending')
@@ -43,9 +43,9 @@ class PaymentEditRequestRepository {
           .from('payment_edit_requests')
           .select('''
             *,
-            profiles!agent_id(full_name),
-            payments!payment_id(
-              customers!customer_id(full_name)
+            profiles!agent_id!left(full_name),
+            payments!payment_id!left(
+              customers!customer_id!left(full_name)
             )
           ''')
           .order('created_at', ascending: false);

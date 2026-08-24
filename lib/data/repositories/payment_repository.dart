@@ -17,6 +17,7 @@ class PaymentRepository {
     int? productId, // Nullable for legacy support
     DateTime? paymentDate, // Optional: allows agents to backdate a payment
     bool isApproved = true, // Default to true unless backdated
+    required int cycleId, // REQUIRED: active cycle id
   }) async {
     try {
       // Calculate boxes collected
@@ -30,6 +31,7 @@ class PaymentRepository {
         'amount_paid': amount,
         'boxes_equivalent': boxesCollected,
         'is_approved': isApproved,
+        'cycle_id': cycleId,
         if (productId != null) 'product_id': productId,
         if (paymentDate != null) 'timestamp': paymentDate.toIso8601String(),
       };
@@ -79,7 +81,7 @@ class PaymentRepository {
           .select('''
             *,
             products!left(name),
-            profiles!agent_id(full_name),
+            profiles!agent_id!left(full_name),
             customers!left(full_name, products!left(name))
           ''')
           .eq('is_approved', false)
@@ -187,17 +189,22 @@ class PaymentRepository {
   }
 
   /// Fetch all payments for a specific agent
-  Future<List<Payment>> fetchPaymentsByAgent(String agentId) async {
+  Future<List<Payment>> fetchPaymentsByAgent(String agentId, {int? cycleId}) async {
     try {
-      final response = await _supabase
+      var query = _supabase
           .from('payments')
           .select('''
             *,
             products!left(name),
             customers!left(full_name, products!left(name))
           ''')
-          .eq('agent_id', agentId)
-          .order('timestamp', ascending: false);
+          .eq('agent_id', agentId);
+
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query.order('timestamp', ascending: false);
 
       return (response as List)
           .map((json) {
@@ -220,13 +227,58 @@ class PaymentRepository {
     }
   }
 
-  /// Fetch total system revenue (sum of all payments)
-  Future<double> fetchTotalRevenue() async {
+  /// Fetch all payments for a specific customer, optionally filtered by cycle
+  Future<List<Payment>> fetchPaymentsByCustomer(String customerId, {int? cycleId}) async {
     try {
-      final response = await _supabase
+      var query = _supabase
+          .from('payments')
+          .select('''
+            *,
+            products!left(name),
+            profiles!agent_id!left(full_name),
+            customers!left(full_name, products!left(name))
+          ''')
+          .eq('customer_id', customerId);
+
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query.order('timestamp', ascending: false);
+
+      return (response as List).map((json) {
+        final payment = Map<String, dynamic>.from(json as Map<String, dynamic>);
+        if (payment['customers'] != null) {
+          payment['customer_name'] = payment['customers']['full_name'];
+          if (payment['products'] != null) {
+            payment['product_name'] = payment['products']['name'];
+          } else if (payment['customers']['products'] != null) {
+            payment['product_name'] = payment['customers']['products']['name'];
+          }
+        }
+        if (payment['profiles'] != null) {
+          payment['agent_name'] = payment['profiles']['full_name'];
+        }
+        return Payment.fromJson(payment);
+      }).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch customer payments: $e');
+    }
+  }
+
+  /// Fetch total system revenue (sum of all payments), optionally filtered by cycle
+  Future<double> fetchTotalRevenue({int? cycleId}) async {
+    try {
+      var query = _supabase
           .from('payments')
           .select('amount_paid')
           .eq('is_approved', true);
+
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query;
 
       if (response is List && response.isEmpty) {
         return 0.0;
@@ -234,7 +286,7 @@ class PaymentRepository {
 
       final total = (response as List)
           .map((json) => double.tryParse(json['amount_paid'].toString()) ?? 0.0)
-          .reduce((a, b) => a + b);
+          .fold<double>(0.0, (a, b) => a + b);
 
       return total;
     } catch (e) {
@@ -242,14 +294,20 @@ class PaymentRepository {
     }
   }
 
-  /// Fetch total revenue for a specific agent
-  Future<double> fetchAgentLifetimeCollection(String agentId) async {
+  /// Fetch total revenue for a specific agent, optionally filtered by cycle
+  Future<double> fetchAgentLifetimeCollection(String agentId, {int? cycleId}) async {
     try {
-      final response = await _supabase
+      var query = _supabase
           .from('payments')
           .select('amount_paid')
           .eq('agent_id', agentId)
           .eq('is_approved', true);
+
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query;
 
       if (response is List && response.isEmpty) {
         return 0.0;
@@ -265,14 +323,20 @@ class PaymentRepository {
     }
   }
 
-  /// Fetch total boxes collected by an agent
-  Future<double> fetchAgentTotalBoxesCollected(String agentId) async {
+  /// Fetch total boxes collected by an agent, optionally filtered by cycle
+  Future<double> fetchAgentTotalBoxesCollected(String agentId, {int? cycleId}) async {
     try {
-      final response = await _supabase
+      var query = _supabase
           .from('payments')
           .select('boxes_equivalent')
           .eq('agent_id', agentId)
           .eq('is_approved', true);
+
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query;
 
       if (response is List && response.isEmpty) {
         return 0.0;
@@ -289,13 +353,13 @@ class PaymentRepository {
     }
   }
 
-  /// Fetch payments by specific date
-  Future<List<Payment>> fetchPaymentsByDate(DateTime date) async {
+  /// Fetch payments by specific date, optionally filtered by cycle
+  Future<List<Payment>> fetchPaymentsByDate(DateTime date, {int? cycleId}) async {
     try {
       final startOfDay = DateTime(date.year, date.month, date.day);
       final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
 
-      final response = await _supabase
+      var query = _supabase
           .from('payments')
           .select('''
             *,
@@ -304,8 +368,13 @@ class PaymentRepository {
             profiles!agent_id(full_name)
           ''')
           .gte('timestamp', startOfDay.toIso8601String())
-          .lte('timestamp', endOfDay.toIso8601String())
-          .order('timestamp', ascending: false);
+          .lte('timestamp', endOfDay.toIso8601String());
+
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query.order('timestamp', ascending: false);
 
       return (response as List)
           .map((json) {
@@ -330,53 +399,25 @@ class PaymentRepository {
     }
   }
 
-  /// Fetch payments by customer ID
-  Future<List<Payment>> fetchPaymentsByCustomer(String customerId) async {
-    try {
-      final response = await _supabase
-          .from('payments')
-          .select('''
-            *,
-            products!left(name),
-            profiles!agent_id(full_name),
-            customers!left(products!left(name))
-          ''')
-          .eq('customer_id', customerId)
-          .order('timestamp', ascending: false);
-
-      return (response as List)
-          .map((json) {
-            final payment = Map<String, dynamic>.from(json as Map<String, dynamic>);
-            if (payment['profiles'] != null) {
-              payment['agent_name'] = payment['profiles']['full_name'];
-            }
-            
-            if (payment['products'] != null) {
-              payment['product_name'] = payment['products']['name'];
-            } else if (payment['customers'] != null && payment['customers']['products'] != null) {
-              payment['product_name'] = payment['customers']['products']['name'];
-            }
-            return Payment.fromJson(payment);
-          })
-          .toList();
-    } catch (e) {
-      throw Exception('Failed to fetch customer payments: $e');
-    }
-  }
-
-  /// Fetch agent's total collection for a specific date (Point 6)
-  Future<double> fetchAgentDailyCollection(String agentId, DateTime date) async {
+  /// Fetch agent's total collection for a specific date, optionally filtered by cycle
+  Future<double> fetchAgentDailyCollection(String agentId, DateTime date, {int? cycleId}) async {
     try {
       final startOfDay = DateTime(date.year, date.month, date.day);
       final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
 
-      final response = await _supabase
+      var query = _supabase
           .from('payments')
           .select('amount_paid')
           .eq('agent_id', agentId)
           .eq('is_approved', true)
           .gte('timestamp', startOfDay.toIso8601String())
           .lte('timestamp', endOfDay.toIso8601String());
+
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query;
 
       if (response is List && response.isEmpty) {
         return 0.0;
@@ -392,13 +433,13 @@ class PaymentRepository {
     }
   }
 
-  /// Fetch agent's payments for a specific date with product details (Point 6)
-  Future<List<Payment>> fetchAgentDailyPayments(String agentId, DateTime date) async {
+  /// Fetch agent's payments for a specific date with product details, optionally filtered by cycle
+  Future<List<Payment>> fetchAgentDailyPayments(String agentId, DateTime date, {int? cycleId}) async {
     try {
       final startOfDay = DateTime(date.year, date.month, date.day);
       final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
 
-      final response = await _supabase
+      var query = _supabase
           .from('payments')
           .select('''
             *,
@@ -407,8 +448,13 @@ class PaymentRepository {
           ''')
           .eq('agent_id', agentId)
           .gte('timestamp', startOfDay.toIso8601String())
-          .lte('timestamp', endOfDay.toIso8601String())
-          .order('timestamp', ascending: false);
+          .lte('timestamp', endOfDay.toIso8601String());
+
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query.order('timestamp', ascending: false);
 
       return (response as List)
           .map((json) {

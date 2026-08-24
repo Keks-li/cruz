@@ -9,6 +9,7 @@ import '../data/repositories/payment_edit_request_repository.dart';
 import '../data/repositories/agent_repository.dart';
 import '../data/repositories/zone_repository.dart';
 import '../data/repositories/settings_repository.dart';
+import '../data/repositories/cycle_repository.dart';
 
 /// Global Supabase client provider
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
@@ -59,4 +60,9 @@ final customerProductRepositoryProvider = Provider<CustomerProductRepository>((r
 final paymentEditRequestRepositoryProvider = Provider<PaymentEditRequestRepository>((ref) {
   final supabase = ref.watch(supabaseClientProvider);
   return PaymentEditRequestRepository(supabase);
+});
+
+final cycleRepositoryProvider = Provider<CycleRepository>((ref) {
+  final supabase = ref.watch(supabaseClientProvider);
+  return CycleRepository(supabase);
 });

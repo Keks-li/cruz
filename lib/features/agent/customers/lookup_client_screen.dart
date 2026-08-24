@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme.dart';
 import '../../../core/providers.dart';
+import '../../../data/models/payment.dart';
 import '../../../providers/agent_providers.dart';
 import '../../../providers/auth_provider.dart';
 import 'add_product_dialog.dart';
@@ -338,6 +339,16 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                                 );
                               }
 
+                              // Fetch active cycle — agents MUST be in an active cycle
+                              final activeCycle = await ref.read(
+                                agentActiveCycleProvider.future,
+                              );
+                              if (activeCycle == null) {
+                                throw Exception(
+                                  'No active business cycle. Please contact an admin.',
+                                );
+                              }
+
                               // Determine approval status
                               final now = DateTime.now();
                               final isBackdated =
@@ -352,13 +363,14 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                               final isApproved =
                                   !isBackdated; // true if today or later
 
-                              await paymentRepo.recordPayment(
+                              final recordedPayment = await paymentRepo.recordPayment(
                                 customerId: customerId,
                                 agentId: currentUser.id,
                                 amount: totalToCollect,
                                 productBoxRate: boxRate,
                                 paymentDate: selectedDate,
                                 isApproved: isApproved,
+                                cycleId: activeCycle.id,
                               );
 
                               // Refresh data
@@ -367,27 +379,19 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                               ref.invalidate(agentStatsProvider);
                               ref.invalidate(agentDailyCollectionProvider);
                               ref.invalidate(agentDailyPaymentsProvider);
+                              ref.invalidate(customerPaymentHistoryProvider(customerId));
 
                               if (dialogContext.mounted) {
                                 Navigator.of(dialogContext).pop();
                               }
 
                               if (this.context.mounted) {
-                                ScaffoldMessenger.of(this.context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      isApproved
-                                          ? 'Collected $boxesToCollect boxes (GHC ${totalToCollect.toStringAsFixed(2)})'
-                                          : 'Payment submitted for Admin approval (GHC ${totalToCollect.toStringAsFixed(2)})',
-                                    ),
-                                    backgroundColor: isApproved
-                                        ? AppTheme.agentPrimaryColor
-                                        : Colors.orange.shade800,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
+                                _showCustomerPaymentHistoryModal(
+                                  this.context,
+                                  customerId: customerId,
+                                  customerName: customerName,
+                                  justCollectedPayment: recordedPayment,
+                                  productName: productName,
                                 );
                               }
                             } catch (e) {
@@ -492,18 +496,39 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
   @override
   Widget build(BuildContext context) {
     final customersAsync = ref.watch(assignedCustomersProvider);
+    final activeCycleAsync = ref.watch(agentActiveCycleProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.agentBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'My Customers',
-          style: TextStyle(
-            color: AppTheme.agentTextColor,
-            fontWeight: FontWeight.w800,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'My Customers',
+              style: TextStyle(
+                color: AppTheme.agentTextColor,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            activeCycleAsync.when(
+              data: (cycle) => Text(
+                cycle != null ? cycle.name : 'No active cycle — contact admin',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: cycle != null
+                      ? AppTheme.agentPrimaryColor
+                      : AppTheme.dangerColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+          ],
         ),
       ),
       body: Column(
@@ -690,44 +715,81 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                 ],
               ),
               const SizedBox(height: 6),
-              Row(
-                children: [
-                  _buildStatusBadge(boxesRemaining == 0),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: () => _showAddProductDialog(customer),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.agentAccentRegister.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.add_rounded,
-                            color: AppTheme.agentAccentRegister,
-                            size: 12,
+                  Row(
+                    children: [
+                      _buildStatusBadge(boxesRemaining == 0),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () => _showAddProductDialog(customer),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
                           ),
-                          const SizedBox(width: 2),
-                          Text(
-                            'ADD',
-                            style: TextStyle(
-                              color: AppTheme.agentAccentRegister,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 10,
-                            ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.agentAccentRegister.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.add_rounded,
+                                color: AppTheme.agentAccentRegister,
+                                size: 12,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                'ADD',
+                                style: TextStyle(
+                                  color: AppTheme.agentAccentRegister,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: () => _showCustomerPaymentHistoryModal(
+                          context,
+                          customerId: customer.id,
+                          customerName: customer.fullName,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.agentPrimaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.receipt_long_rounded,
+                                color: AppTheme.agentPrimaryColor,
+                                size: 12,
+                              ),
+                              const SizedBox(width: 2),
+                              const Text(
+                                'HISTORY',
+                                style: TextStyle(
+                                  color: AppTheme.agentPrimaryColor,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
             ],
           ),
           children: [
@@ -779,6 +841,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                       boxesPaid: cp.boxesPaid,
                       boxRate: cp.pricePerBox ?? 0,
                       customerId: customer.id,
+                      customerName: customer.fullName,
                       productId: cp.productId,
                       customerProductId: cp.id,
                       isLegacy: false,
@@ -820,6 +883,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
     required int boxesPaid,
     required double boxRate,
     required String customerId,
+    required String customerName,
     required dynamic productId, // Can be int or String
     String? customerProductId,
     required bool isLegacy,
@@ -924,7 +988,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                   if (product != null && mounted) {
                     _showCollectDialog(
                       customerId,
-                      '', // Customer name not needed, dialog shows product
+                      customerName,
                       productName,
                       boxesRemaining * (product.boxRate),
                       product.boxRate,
@@ -936,6 +1000,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                   // Use new customer_products method
                   _showCollectDialogForProduct(
                     customerId: customerId,
+                    customerName: customerName,
                     productName: productName,
                     boxRate: boxRate,
                     boxesAssigned: boxesAssigned,
@@ -1055,6 +1120,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
 
   void _showCollectDialogForProduct({
     required String customerId,
+    required String customerName,
     required String productName,
     required double boxRate,
     required int boxesAssigned,
@@ -1347,6 +1413,16 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                                 throw Exception('Not logged in');
                               }
 
+                              // Fetch active cycle — agents MUST be in an active cycle
+                              final activeCycle = await ref.read(
+                                agentActiveCycleProvider.future,
+                              );
+                              if (activeCycle == null) {
+                                throw Exception(
+                                  'No active business cycle. Please contact an admin.',
+                                );
+                              }
+
                               // Determine approval status
                               final now = DateTime.now();
                               final isBackdated =
@@ -1362,7 +1438,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                                   !isBackdated; // true if today or later
 
                               // Record payment
-                              await paymentRepo.recordPayment(
+                              final recordedPayment = await paymentRepo.recordPayment(
                                 customerId: customerId,
                                 agentId: currentUser.id,
                                 amount: totalToCollect,
@@ -1371,6 +1447,7 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                                     productId, // NEW: Link payment to product
                                 paymentDate: selectedDate,
                                 isApproved: isApproved,
+                                cycleId: activeCycle.id,
                               );
 
                               // ONLY Update customer_products table if payment is approved immediately
@@ -1391,27 +1468,19 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
                               ref.invalidate(agentStatsProvider);
                               ref.invalidate(agentDailyCollectionProvider);
                               ref.invalidate(agentDailyPaymentsProvider);
+                              ref.invalidate(customerPaymentHistoryProvider(customerId));
 
                               if (dialogContext.mounted) {
                                 Navigator.of(dialogContext).pop();
                               }
 
                               if (this.context.mounted) {
-                                ScaffoldMessenger.of(this.context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      isApproved
-                                          ? 'Collected $boxesToCollect boxes of $productName (GHC ${totalToCollect.toStringAsFixed(2)})'
-                                          : 'Payment submitted for Admin approval (GHC ${totalToCollect.toStringAsFixed(2)})',
-                                    ),
-                                    backgroundColor: isApproved
-                                        ? AppTheme.agentPrimaryColor
-                                        : Colors.orange.shade800,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
+                                _showCustomerPaymentHistoryModal(
+                                  this.context,
+                                  customerId: customerId,
+                                  customerName: customerName,
+                                  justCollectedPayment: recordedPayment,
+                                  productName: productName,
                                 );
                               }
                             } catch (e) {
@@ -1629,6 +1698,428 @@ class _LookupClientScreenState extends ConsumerState<LookupClientScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showCustomerPaymentHistoryModal(
+    BuildContext context, {
+    required String customerId,
+    required String customerName,
+    Payment? justCollectedPayment,
+    String? productName,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetContext) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final historyAsync = ref.watch(customerPaymentHistoryProvider(customerId));
+            final activeCycleAsync = ref.watch(agentActiveCycleProvider);
+            final activeCycle = activeCycleAsync.value;
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: Column(
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 12, bottom: 8),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 16, 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      customerName,
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.agentTextColor,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  if (activeCycle != null)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.agentPrimaryColor.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        activeCycle.name,
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppTheme.agentPrimaryColor,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              const Text(
+                                'Payment & Collection History',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, color: Colors.grey),
+                          onPressed: () => Navigator.of(bottomSheetContext).pop(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+
+                  // Content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // If this was loaded right after clicking collect, show Success Receipt Card!
+                          if (justCollectedPayment != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(18),
+                              decoration: BoxDecoration(
+                                color: AppTheme.agentPrimaryColor.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: AppTheme.agentPrimaryColor.withOpacity(0.3),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: const BoxDecoration(
+                                          color: AppTheme.agentPrimaryColor,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.check_rounded,
+                                          color: Colors.white,
+                                          size: 22,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'Payment Collected!',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w800,
+                                                color: AppTheme.agentPrimaryColor,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'GHC ${justCollectedPayment.amountPaid.toStringAsFixed(2)} • ${justCollectedPayment.boxesEquivalent ?? 1} Boxes (${productName ?? "Product"})',
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppTheme.agentTextColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: justCollectedPayment.isApproved
+                                              ? AppTheme.agentPrimaryColor
+                                              : Colors.orange.shade800,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          justCollectedPayment.isApproved ? 'RECORDED' : 'PENDING',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.shield_outlined, size: 16, color: Colors.grey.shade600),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            'Transaction saved. Recorded below to prevent duplicate entries.',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey.shade700,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // Title for History List
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'TRANSACTION HISTORY',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              historyAsync.when(
+                                data: (list) => Text(
+                                  '${list.length} ${list.length == 1 ? "Payment" : "Payments"}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.agentPrimaryColor,
+                                  ),
+                                ),
+                                loading: () => const SizedBox.shrink(),
+                                error: (_, __) => const SizedBox.shrink(),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+
+                          // History Items
+                          historyAsync.when(
+                            data: (payments) {
+                              if (payments.isEmpty) {
+                                return Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 40),
+                                    child: Column(
+                                      children: [
+                                        Icon(Icons.receipt_long_outlined, size: 48, color: Colors.grey.shade300),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'No payment records found for this cycle',
+                                          style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              return ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: payments.length,
+                                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                itemBuilder: (context, index) {
+                                  final p = payments[index];
+                                  final isJustCollected = justCollectedPayment != null && p.id == justCollectedPayment.id;
+
+                                  final dateStr = '${p.timestamp.day}/${p.timestamp.month}/${p.timestamp.year}';
+                                  final timeStr = '${p.timestamp.hour.toString().padLeft(2, '0')}:${p.timestamp.minute.toString().padLeft(2, '0')}';
+
+                                  return Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: isJustCollected ? AppTheme.agentPrimaryColor.withOpacity(0.04) : AppTheme.agentInputFill,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: isJustCollected ? AppTheme.agentPrimaryColor.withOpacity(0.4) : Colors.grey.shade200,
+                                        width: isJustCollected ? 1.5 : 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: p.isApproved
+                                                ? AppTheme.agentPrimaryColor.withOpacity(0.12)
+                                                : Colors.orange.shade50,
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(
+                                            p.isApproved ? Icons.payments_rounded : Icons.pending_actions_rounded,
+                                            color: p.isApproved ? AppTheme.agentPrimaryColor : Colors.orange.shade800,
+                                            size: 22,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    'GHC ${p.amountPaid.toStringAsFixed(2)}',
+                                                    style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.w800,
+                                                      color: AppTheme.agentTextColor,
+                                                    ),
+                                                  ),
+                                                  if (isJustCollected) ...[
+                                                    const SizedBox(width: 6),
+                                                    Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                      decoration: BoxDecoration(
+                                                        color: AppTheme.agentPrimaryColor,
+                                                        borderRadius: BorderRadius.circular(6),
+                                                      ),
+                                                      child: const Text(
+                                                        'JUST NOW',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 8,
+                                                          fontWeight: FontWeight.w900,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                '${p.boxesEquivalent ?? 1} Boxes • ${p.productName ?? "Product"}',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.grey.shade700,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                '$dateStr at $timeStr',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.grey.shade500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: p.isApproved
+                                                ? AppTheme.agentPrimaryColor.withOpacity(0.1)
+                                                : Colors.orange.shade100,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            p.isApproved ? 'APPROVED' : 'PENDING',
+                                            style: TextStyle(
+                                              color: p.isApproved ? AppTheme.agentPrimaryColor : Colors.orange.shade900,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                            loading: () => const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(32),
+                                child: CircularProgressIndicator(color: AppTheme.agentPrimaryColor),
+                              ),
+                            ),
+                            error: (e, _) => Center(
+                              child: Text('Error loading history: $e', style: const TextStyle(color: AppTheme.dangerColor)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Bottom Action Button
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(bottomSheetContext).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.agentPrimaryColor,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 52),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: const Text(
+                        'DONE / BACK TO CLIENTS',
+                        style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

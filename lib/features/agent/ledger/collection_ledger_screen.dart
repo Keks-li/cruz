@@ -34,12 +34,31 @@ class _CollectionLedgerScreenState extends ConsumerState<CollectionLedgerScreen>
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Collection Ledger',
-          style: TextStyle(
-            color: AppTheme.agentTextColor,
-            fontWeight: FontWeight.w800,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Collection Ledger',
+              style: TextStyle(
+                color: AppTheme.agentTextColor,
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+              ),
+            ),
+            ref.watch(agentActiveCycleProvider).when(
+              data: (cycle) => Text(
+                cycle != null ? 'Cycle: ${cycle.name}' : 'No Active Cycle',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.agentPrimaryColor,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+          ],
         ),
       ),
       body: paymentsAsync.when(

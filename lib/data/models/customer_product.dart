@@ -19,6 +19,9 @@ class CustomerProduct {
   final String? customerName; // From joins
   final String? agentName; // From joins
 
+  // Cycle tracking
+  final int? cycleId;
+
   const CustomerProduct({
     required this.id,
     required this.customerId,
@@ -35,6 +38,7 @@ class CustomerProduct {
     this.totalPrice,
     this.customerName,
     this.agentName,
+    this.cycleId,
   });
 
   factory CustomerProduct.fromJson(Map<String, dynamic> json) {
@@ -87,6 +91,7 @@ class CustomerProduct {
       totalPrice: parseDoubleOrNull(json['total_price']),
       customerName: getCustomerName(json),
       agentName: getAgentName(json),
+      cycleId: json['cycle_id'] as int?,
     );
   }
 
@@ -99,6 +104,7 @@ class CustomerProduct {
       'boxes_paid': boxesPaid,
       'balance_due': balanceDue,
       'registration_fee_paid': registrationFeePaid,
+      if (cycleId != null) 'cycle_id': cycleId,
     };
   }
 
@@ -121,6 +127,7 @@ class CustomerProduct {
     String? productName,
     double? pricePerBox,
     double? totalPrice,
+    int? cycleId,
   }) {
     return CustomerProduct(
       id: id ?? this.id,
@@ -135,6 +142,7 @@ class CustomerProduct {
       productName: productName ?? this.productName,
       pricePerBox: pricePerBox ?? this.pricePerBox,
       totalPrice: totalPrice ?? this.totalPrice,
+      cycleId: cycleId ?? this.cycleId,
     );
   }
 }

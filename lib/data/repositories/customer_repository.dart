@@ -16,6 +16,7 @@ class CustomerRepository {
     double initialBalanceDue = 0,
     int totalBoxes = 0,
     required double registrationFeePaid,
+    required int cycleId, // REQUIRED: active cycle id
   }) async {
     try {
       final data = <String, dynamic>{
@@ -28,6 +29,7 @@ class CustomerRepository {
         'boxes_paid': 0,
         'registration_fee_paid': registrationFeePaid,
         'is_active': true,
+        'cycle_id': cycleId,
       };
       
       // Only add product_id if provided
@@ -47,18 +49,23 @@ class CustomerRepository {
     }
   }
 
-  /// Fetch all customers assigned to a specific agent
-  Future<List<Customer>> fetchCustomersByAgent(String agentId) async {
+  /// Fetch all customers assigned to a specific agent, optionally filtered by cycle
+  Future<List<Customer>> fetchCustomersByAgent(String agentId, {int? cycleId}) async {
     try {
-      final response = await _supabase
+      var query = _supabase
           .from('customers')
           .select('''
             *,
-            products(name),
-            zones!inner(name)
+            products!left(name),
+            zones!left(name)
           ''')
-          .eq('assigned_agent_id', agentId)
-          .order('created_at', ascending: false);
+          .eq('assigned_agent_id', agentId);
+
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query.order('created_at', ascending: false);
 
       return (response as List)
           .map((json) {
@@ -77,18 +84,23 @@ class CustomerRepository {
     }
   }
 
-  /// Fetch all customers (admin view)
-  Future<List<Customer>> fetchAllCustomers() async {
+  /// Fetch all customers (admin view), optionally filtered by cycle
+  Future<List<Customer>> fetchAllCustomers({int? cycleId}) async {
     try {
-      final response = await _supabase
+      var query = _supabase
           .from('customers')
           .select('''
             *,
-            products(name),
-            zones(name),
-            profiles!assigned_agent_id(full_name)
-          ''')
-          .order('created_at', ascending: false);
+            products!left(name),
+            zones!left(name),
+            profiles!assigned_agent_id!left(full_name)
+          ''');
+
+      if (cycleId != null) {
+        query = query.eq('cycle_id', cycleId);
+      }
+
+      final response = await query.order('created_at', ascending: false);
 
       return (response as List)
           .map((json) {
@@ -167,8 +179,8 @@ class CustomerRepository {
           .from('customers')
           .select('''
             *,
-            products(name, box_rate),
-            zones!inner(name)
+            products!left(name, box_rate),
+            zones!left(name)
           ''')
           .eq('id', id)
           .maybeSingle();

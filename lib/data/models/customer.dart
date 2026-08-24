@@ -17,6 +17,9 @@ class Customer {
   final String? productName;
   final String? agentName;
 
+  // Cycle tracking
+  final int? cycleId;
+
   const Customer({
     required this.id,
     required this.fullName,
@@ -33,6 +36,7 @@ class Customer {
     this.zoneName,
     this.productName,
     this.agentName,
+    this.cycleId,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) {
@@ -55,7 +59,7 @@ class Customer {
 
     return Customer(
       id: json['id'] as String,
-      fullName: json['full_name'] as String,
+      fullName: json['full_name'] as String? ?? 'Unnamed Customer',
       phone: json['phone'] as String?,
       zoneId: parseIntOrNull(json['zone_id']),
       productId: json['product_id']?.toString() ?? '0',
@@ -65,10 +69,13 @@ class Customer {
       balanceDue: parseDoubleOrZero(json['balance_due']),
       registrationFeePaid: parseDoubleOrZero(json['registration_fee_paid']),
       isActive: json['is_active'] as bool? ?? true,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: json['created_at'] != null
+          ? (DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now())
+          : DateTime.now(),
       zoneName: json['zone_name'] as String?,
       productName: json['product_name'] as String?,
       agentName: json['agent_name'] as String?,
+      cycleId: parseIntOrNull(json['cycle_id']),
     );
   }
 
@@ -84,6 +91,7 @@ class Customer {
       'boxes_paid': boxesPaid,
       'balance_due': balanceDue,
       'is_active': isActive,
+      if (cycleId != null) 'cycle_id': cycleId,
     };
   }
 
@@ -103,6 +111,7 @@ class Customer {
     String? zoneName,
     String? productName,
     String? agentName,
+    int? cycleId,
   }) {
     return Customer(
       id: id ?? this.id,
@@ -120,6 +129,7 @@ class Customer {
       zoneName: zoneName ?? this.zoneName,
       productName: productName ?? this.productName,
       agentName: agentName ?? this.agentName,
+      cycleId: cycleId ?? this.cycleId,
     );
   }
 }
