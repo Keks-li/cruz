@@ -49,10 +49,14 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
             ),
             currentCycleAsync.when(
               data: (cycle) => Text(
-                cycle != null ? '${cycle.name}${cycle.isActive ? " (Active)" : ""}' : 'All Cycles',
+                cycle != null
+                    ? '${cycle.name}${cycle.isActive ? " (Active)" : ""}'
+                    : 'All Cycles',
                 style: TextStyle(
                   fontSize: 12,
-                  color: cycle?.isActive == true ? AppTheme.adminAccentRevenue : Colors.grey.shade600,
+                  color: cycle?.isActive == true
+                      ? AppTheme.adminAccentRevenue
+                      : Colors.grey.shade600,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -67,17 +71,30 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
               final currentCycle = currentCycleAsync.value;
               return Container(
                 margin: const EdgeInsets.only(right: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.adminPrimaryColor.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.adminPrimaryColor.withOpacity(0.15)),
+                  border: Border.all(
+                    color: AppTheme.adminPrimaryColor.withOpacity(0.15),
+                  ),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<int?>(
                     value: currentCycle?.id,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: AppTheme.adminPrimaryColor),
-                    style: const TextStyle(fontWeight: FontWeight.w700, color: AppTheme.adminPrimaryColor, fontSize: 13),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 18,
+                      color: AppTheme.adminPrimaryColor,
+                    ),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.adminPrimaryColor,
+                      fontSize: 13,
+                    ),
                     items: cycles.map((c) {
                       return DropdownMenuItem<int?>(
                         value: c.id,
@@ -85,9 +102,13 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              c.isActive ? Icons.play_circle_filled_rounded : Icons.history_rounded,
+                              c.isActive
+                                  ? Icons.play_circle_filled_rounded
+                                  : Icons.history_rounded,
                               size: 16,
-                              color: c.isActive ? AppTheme.adminAccentRevenue : Colors.grey,
+                              color: c.isActive
+                                  ? AppTheme.adminAccentRevenue
+                                  : Colors.grey,
                             ),
                             const SizedBox(width: 6),
                             Text('${c.name}${c.isActive ? ' (Active)' : ''}'),
@@ -115,221 +136,284 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
             Padding(
               padding: const EdgeInsets.all(24),
               child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: AppTheme.cardShadow,
-              ),
-              child: TextField(
-                controller: _searchController,
-                style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.adminTextColor),
-                decoration: InputDecoration(
-                  hintText: 'Search Name or Phone...',
-                  hintStyle: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w500),
-                  prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.adminPrimaryColor),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear_rounded, color: Colors.grey),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _searchQuery = '');
-                          },
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.grey.shade200),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.grey.shade200),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppTheme.adminPrimaryColor, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: AppTheme.cardShadow,
                 ),
-                onChanged: (value) {
-                  setState(() => _searchQuery = value.toLowerCase());
-                },
+                child: TextField(
+                  controller: _searchController,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.adminTextColor,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Search Name or Phone...',
+                    hintStyle: TextStyle(
+                      color: Colors.grey.shade400,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: AppTheme.adminPrimaryColor,
+                    ),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(
+                              Icons.clear_rounded,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Colors.grey.shade200),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Colors.grey.shade200),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: AppTheme.adminPrimaryColor,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() => _searchQuery = value.toLowerCase());
+                  },
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: customersAsync.when(
-              data: (customers) {
-                final filteredCustomers = customers.where((customer) {
-                  if (_searchQuery.isEmpty) return true;
-                  final phone = customer.phone ?? '';
-                  return customer.fullName.toLowerCase().contains(_searchQuery) ||
-                         phone.contains(_searchQuery);
-                }).toList();
+            Expanded(
+              child: customersAsync.when(
+                data: (customers) {
+                  final filteredCustomers = customers.where((customer) {
+                    if (_searchQuery.isEmpty) return true;
+                    final phone = customer.phone ?? '';
+                    return customer.fullName.toLowerCase().contains(
+                          _searchQuery,
+                        ) ||
+                        phone.contains(_searchQuery);
+                  }).toList();
 
-                if (filteredCustomers.isEmpty) {
-                  return const Center(child: Text('No customers found'));
-                }
-
-                // Group customers by agent
-                final Map<String, List<Customer>> groupedCustomers = {};
-                for (final customer in filteredCustomers) {
-                  final agentName = customer.agentName ?? 'Unassigned';
-                  if (!groupedCustomers.containsKey(agentName)) {
-                    groupedCustomers[agentName] = [];
+                  if (filteredCustomers.isEmpty) {
+                    return const Center(child: Text('No customers found'));
                   }
-                  groupedCustomers[agentName]!.add(customer);
-                }
 
-                // Sort agent names (Unassigned at the end)
-                final sortedAgentNames = groupedCustomers.keys.toList()..sort((a, b) {
-                  if (a == 'Unassigned') return 1;
-                  if (b == 'Unassigned') return -1;
-                  return a.compareTo(b);
-                });
+                  // Group customers by agent
+                  final Map<String, List<Customer>> groupedCustomers = {};
+                  for (final customer in filteredCustomers) {
+                    final agentName = customer.agentName ?? 'Unassigned';
+                    if (!groupedCustomers.containsKey(agentName)) {
+                      groupedCustomers[agentName] = [];
+                    }
+                    groupedCustomers[agentName]!.add(customer);
+                  }
 
-                return ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  itemCount: sortedAgentNames.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final agentName = sortedAgentNames[index];
-                    final agentCustomers = groupedCustomers[agentName]!;
-                    final isUnassigned = agentName == 'Unassigned';
-                    
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey.shade200),
-                        boxShadow: AppTheme.cardShadow,
-                      ),
-                      child: Theme(
-                        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                        child: ExpansionTile(
-                          initiallyExpanded: true,
-                          tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          childrenPadding: const EdgeInsets.only(bottom: 12),
-                          leading: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: isUnassigned 
-                                  ? AppTheme.adminAccentAlert.withOpacity(0.1)
-                                  : AppTheme.adminPrimaryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
+                  // Sort agent names (Unassigned at the end)
+                  final sortedAgentNames = groupedCustomers.keys.toList()
+                    ..sort((a, b) {
+                      if (a == 'Unassigned') return 1;
+                      if (b == 'Unassigned') return -1;
+                      return a.compareTo(b);
+                    });
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 8,
+                    ),
+                    itemCount: sortedAgentNames.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final agentName = sortedAgentNames[index];
+                      final agentCustomers = groupedCustomers[agentName]!;
+                      final isUnassigned = agentName == 'Unassigned';
+
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: AppTheme.cardShadow,
+                        ),
+                        child: Theme(
+                          data: Theme.of(
+                            context,
+                          ).copyWith(dividerColor: Colors.transparent),
+                          child: ExpansionTile(
+                            initiallyExpanded: true,
+                            tilePadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 8,
                             ),
-                            child: Icon(
-                              Icons.person_rounded,
-                              color: isUnassigned ? AppTheme.adminAccentAlert : AppTheme.adminPrimaryColor,
-                              size: 20,
-                            ),
-                          ),
-                          title: Text(
-                            agentName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                              color: AppTheme.adminTextColor,
-                            ),
-                          ),
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isUnassigned 
-                                  ? AppTheme.adminAccentAlert.withOpacity(0.1)
-                                  : AppTheme.adminPrimaryColor.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '${agentCustomers.length} ${agentCustomers.length == 1 ? 'CUSTOMER' : 'CUSTOMERS'}',
-                              style: TextStyle(
-                                color: isUnassigned ? AppTheme.adminAccentAlert : AppTheme.adminPrimaryColor,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 10,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          children: agentCustomers.map((customer) {
-                            return Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            childrenPadding: const EdgeInsets.only(bottom: 12),
+                            leading: Container(
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade50,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.grey.shade200),
+                                color: isUnassigned
+                                    ? AppTheme.adminAccentAlert.withOpacity(0.1)
+                                    : AppTheme.adminPrimaryColor.withOpacity(
+                                        0.1,
+                                      ),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                title: Text(
-                                  customer.fullName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 15,
-                                    color: AppTheme.adminTextColor,
+                              child: Icon(
+                                Icons.person_rounded,
+                                color: isUnassigned
+                                    ? AppTheme.adminAccentAlert
+                                    : AppTheme.adminPrimaryColor,
+                                size: 20,
+                              ),
+                            ),
+                            title: Text(
+                              agentName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                color: AppTheme.adminTextColor,
+                              ),
+                            ),
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isUnassigned
+                                    ? AppTheme.adminAccentAlert.withOpacity(0.1)
+                                    : AppTheme.adminPrimaryColor.withOpacity(
+                                        0.05,
+                                      ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${agentCustomers.length} ${agentCustomers.length == 1 ? 'CUSTOMER' : 'CUSTOMERS'}',
+                                style: TextStyle(
+                                  color: isUnassigned
+                                      ? AppTheme.adminAccentAlert
+                                      : AppTheme.adminPrimaryColor,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 10,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            children: agentCustomers.map((customer) {
+                              return Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: Colors.grey.shade200,
                                   ),
                                 ),
-                                subtitle: Text(
-                                  customer.phone ?? 'No phone',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade500,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 13,
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 4,
                                   ),
-                                ),
-                                trailing: Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: Colors.grey.shade400,
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => CustomerProfileScreen(customerId: customer.id),
+                                  title: Text(
+                                    customer.fullName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15,
+                                      color: AppTheme.adminTextColor,
                                     ),
-                                  );
-                                },
-                              ),
-                            );
-                          }).toList(),
+                                  ),
+                                  subtitle: Text(
+                                    customer.phone ?? 'No phone',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  trailing: Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => CustomerProfileScreen(
+                                          customerId: customer.id,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stack) => Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline_rounded,
+                        color: Colors.grey,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Failed to load customers',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    );
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline_rounded, color: Colors.grey, size: 48),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Failed to load customers',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Please check your connection',
-                      style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: () => ref.invalidate(allCustomersProvider),
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Retry'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.adminPrimaryColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Please check your connection',
+                        style: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () => ref.invalidate(allCustomersProvider),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Retry'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.adminPrimaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
           ],
         ),
       ),
@@ -340,11 +424,12 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
 // ============ CUSTOMER PROFILE SCREEN ============
 class CustomerProfileScreen extends ConsumerStatefulWidget {
   final String customerId;
-  
+
   const CustomerProfileScreen({super.key, required this.customerId});
 
   @override
-  ConsumerState<CustomerProfileScreen> createState() => _CustomerProfileScreenState();
+  ConsumerState<CustomerProfileScreen> createState() =>
+      _CustomerProfileScreenState();
 }
 
 class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
@@ -378,7 +463,9 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Customer?>(
-      future: ref.read(customerRepositoryProvider).getCustomerById(widget.customerId),
+      future: ref
+          .read(customerRepositoryProvider)
+          .getCustomerById(widget.customerId),
       builder: (context, customerSnapshot) {
         if (!customerSnapshot.hasData) {
           return const Scaffold(
@@ -390,35 +477,47 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
 
         return FutureBuilder(
           future: Future.wait([
-            (customer.productId != '0' && customer.productId != 'null') 
-                ? ref.read(productRepositoryProvider).getProductById(customer.productId)
+            (customer.productId != '0' && customer.productId != 'null')
+                ? ref
+                      .read(productRepositoryProvider)
+                      .getProductById(customer.productId)
                 : Future.value(null),
-            ref.read(paymentRepositoryProvider).fetchPaymentsByCustomer(widget.customerId),
-            ref.read(customerProductRepositoryProvider).fetchProductsByCustomer(widget.customerId),
+            ref
+                .read(paymentRepositoryProvider)
+                .fetchPaymentsByCustomer(widget.customerId),
+            ref
+                .read(customerProductRepositoryProvider)
+                .fetchProductsByCustomer(widget.customerId),
           ]),
           builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
             if (snapshot.hasError) {
               return Scaffold(
-                appBar: AppBar(title: const Text('Error')), 
-                body: Center(child: Text('Error: ${snapshot.error}'))
+                appBar: AppBar(title: const Text('Error')),
+                body: Center(child: Text('Error: ${snapshot.error}')),
               );
             }
             if (!snapshot.hasData) {
-              return const Scaffold(body: Center(child: CircularProgressIndicator()));
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
             }
 
             final product = snapshot.data![0];
             final allPayments = snapshot.data![1] as List<Payment>;
             final customerProducts = snapshot.data![2] as List<CustomerProduct>;
-            
+
             // Filter payments by date range
             final payments = _startDate != null && _endDate != null
                 ? allPayments.where((payment) {
-                    return payment.timestamp.isAfter(_startDate!.subtract(const Duration(days: 1))) &&
-                           payment.timestamp.isBefore(_endDate!.add(const Duration(days: 1)));
+                    return payment.timestamp.isAfter(
+                          _startDate!.subtract(const Duration(days: 1)),
+                        ) &&
+                        payment.timestamp.isBefore(
+                          _endDate!.add(const Duration(days: 1)),
+                        );
                   }).toList()
                 : allPayments;
-            
+
             final boxesLeft = customer.totalBoxesAssigned - customer.boxesPaid;
 
             return Scaffold(
@@ -428,7 +527,10 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                 elevation: 0,
                 leading: IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded, color: AppTheme.adminTextColor),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: AppTheme.adminTextColor,
+                  ),
                 ),
                 title: const Text(
                   'Customer Profile',
@@ -463,26 +565,43 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                   children: [
                                     Text(
                                       customer.fullName,
-                                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor),
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.adminTextColor,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       customer.phone ?? 'No phone',
-                                      style: TextStyle(color: Colors.grey[400], fontSize: 16, fontWeight: FontWeight.w600),
+                                      style: TextStyle(
+                                        color: Colors.grey[400],
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: customer.isActive ? AppTheme.adminAccentRevenue.withOpacity(0.1) : Colors.grey.shade100,
+                                  color: customer.isActive
+                                      ? AppTheme.adminAccentRevenue.withOpacity(
+                                          0.1,
+                                        )
+                                      : Colors.grey.shade100,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   customer.isActive ? 'ACTIVE' : 'INACTIVE',
                                   style: TextStyle(
-                                    color: customer.isActive ? AppTheme.adminAccentRevenue : Colors.grey.shade600,
+                                    color: customer.isActive
+                                        ? AppTheme.adminAccentRevenue
+                                        : Colors.grey.shade600,
                                     fontWeight: FontWeight.w800,
                                     fontSize: 10,
                                     letterSpacing: 1,
@@ -497,14 +616,21 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                               Expanded(
                                 child: ElevatedButton.icon(
                                   onPressed: () => _showEditDialog(customer),
-                                  icon: const Icon(Icons.edit_rounded, size: 18),
+                                  icon: const Icon(
+                                    Icons.edit_rounded,
+                                    size: 18,
+                                  ),
                                   label: const Text('EDIT PROFILE'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppTheme.adminPrimaryColor,
                                     foregroundColor: Colors.white,
                                     elevation: 0,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -512,13 +638,34 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                               Expanded(
                                 child: OutlinedButton.icon(
                                   onPressed: () => _toggleActive(customer),
-                                  icon: Icon(customer.isActive ? Icons.block_flipped : Icons.check_circle_rounded, size: 18),
-                                  label: Text(customer.isActive ? 'DEACTIVATE' : 'ACTIVATE'),
+                                  icon: Icon(
+                                    customer.isActive
+                                        ? Icons.block_flipped
+                                        : Icons.check_circle_rounded,
+                                    size: 18,
+                                  ),
+                                  label: Text(
+                                    customer.isActive
+                                        ? 'DEACTIVATE'
+                                        : 'ACTIVATE',
+                                  ),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: customer.isActive ? AppTheme.adminAccentAlert : AppTheme.adminAccentRevenue,
-                                    side: BorderSide(color: customer.isActive ? AppTheme.adminAccentAlert.withOpacity(0.3) : AppTheme.adminAccentRevenue.withOpacity(0.3)),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    foregroundColor: customer.isActive
+                                        ? AppTheme.adminAccentAlert
+                                        : AppTheme.adminAccentRevenue,
+                                    side: BorderSide(
+                                      color: customer.isActive
+                                          ? AppTheme.adminAccentAlert
+                                                .withOpacity(0.3)
+                                          : AppTheme.adminAccentRevenue
+                                                .withOpacity(0.3),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -532,9 +679,19 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        _buildInfoTile('ASSIGNED AGENT', customer.agentName ?? 'Unassigned', Icons.person_pin_rounded, onAction: () => _showTransferDialog(customer), actionLabel: 'Transfer'),
+                        _buildInfoTile(
+                          'ASSIGNED AGENT',
+                          customer.agentName ?? 'Unassigned',
+                          Icons.person_pin_rounded,
+                          onAction: () => _showTransferDialog(customer),
+                          actionLabel: 'Transfer',
+                        ),
                         const SizedBox(width: 16),
-                        _buildInfoTile('ZONE LOCATION', customer.zoneName ?? 'N/A', Icons.location_on_rounded),
+                        _buildInfoTile(
+                          'ZONE LOCATION',
+                          customer.zoneName ?? 'N/A',
+                          Icons.location_on_rounded,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -551,10 +708,14 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                     ),
                     const SizedBox(height: 12),
                     FutureBuilder(
-                      future: ref.read(customerProductRepositoryProvider).fetchProductsByCustomer(widget.customerId),
+                      future: ref
+                          .read(customerProductRepositoryProvider)
+                          .fetchProductsByCustomer(widget.customerId),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
 
                         final customerProducts = snapshot.data!;
@@ -575,7 +736,8 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: customerProducts.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final cp = customerProducts[index];
                             final isActive = cp.isActive;
@@ -586,7 +748,9 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: isActive ? Colors.grey.shade200 : AppTheme.dangerColor.withOpacity(0.3),
+                                  color: isActive
+                                      ? Colors.grey.shade200
+                                      : AppTheme.dangerColor.withOpacity(0.3),
                                 ),
                                 boxShadow: AppTheme.cardShadow,
                               ),
@@ -595,28 +759,34 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: isActive 
-                                          ? AppTheme.adminAccentRevenue.withOpacity(0.1)
+                                      color: isActive
+                                          ? AppTheme.adminAccentRevenue
+                                                .withOpacity(0.1)
                                           : Colors.grey.shade100,
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Icon(
                                       Icons.inventory_2_rounded,
-                                      color: isActive ? AppTheme.adminAccentRevenue : Colors.grey.shade400,
+                                      color: isActive
+                                          ? AppTheme.adminAccentRevenue
+                                          : Colors.grey.shade400,
                                       size: 20,
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           cp.productName ?? 'Unknown Product',
                                           style: TextStyle(
                                             fontWeight: FontWeight.w800,
                                             fontSize: 15,
-                                            color: isActive ? AppTheme.adminTextColor : Colors.grey.shade500,
+                                            color: isActive
+                                                ? AppTheme.adminTextColor
+                                                : Colors.grey.shade500,
                                           ),
                                         ),
                                         const SizedBox(height: 4),
@@ -632,19 +802,32 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                             ),
                                             const SizedBox(width: 8),
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: isActive 
-                                                    ? AppTheme.adminAccentRevenue.withOpacity(0.1)
-                                                    : AppTheme.dangerColor.withOpacity(0.1),
-                                                borderRadius: BorderRadius.circular(4),
+                                                color: isActive
+                                                    ? AppTheme
+                                                          .adminAccentRevenue
+                                                          .withOpacity(0.1)
+                                                    : AppTheme.dangerColor
+                                                          .withOpacity(0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
                                               ),
                                               child: Text(
-                                                isActive ? 'ACTIVE' : 'TERMINATED',
+                                                isActive
+                                                    ? 'ACTIVE'
+                                                    : 'TERMINATED',
                                                 style: TextStyle(
                                                   fontSize: 9,
                                                   fontWeight: FontWeight.w800,
-                                                  color: isActive ? AppTheme.adminAccentRevenue : AppTheme.dangerColor,
+                                                  color: isActive
+                                                      ? AppTheme
+                                                            .adminAccentRevenue
+                                                      : AppTheme.dangerColor,
                                                   letterSpacing: 0.5,
                                                 ),
                                               ),
@@ -658,29 +841,43 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                     value: isActive,
                                     onChanged: (value) async {
                                       try {
-                                        await ref.read(customerProductRepositoryProvider).toggleProductActive(cp.id, value);
-                                        
+                                        await ref
+                                            .read(
+                                              customerProductRepositoryProvider,
+                                            )
+                                            .toggleProductActive(cp.id, value);
+
                                         // Refresh the screen
                                         setState(() {});
-                                        
+
                                         if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             SnackBar(
                                               content: Text(
                                                 'Product ${value ? "activated" : "deactivated"}',
-                                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
                                               ),
-                                              backgroundColor: value ? AppTheme.adminAccentRevenue : AppTheme.dangerColor,
-                                              behavior: SnackBarBehavior.floating,
+                                              backgroundColor: value
+                                                  ? AppTheme.adminAccentRevenue
+                                                  : AppTheme.dangerColor,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
                                             ),
                                           );
                                         }
                                       } catch (e) {
                                         if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             SnackBar(
                                               content: Text('Error: $e'),
-                                              backgroundColor: AppTheme.dangerColor,
+                                              backgroundColor:
+                                                  AppTheme.dangerColor,
                                             ),
                                           );
                                         }
@@ -718,33 +915,52 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: AppTheme.cardShadow,
-                            border: Border.all(color: cp.isActive ? Colors.grey.shade100 : AppTheme.dangerColor.withOpacity(0.3)),
+                            border: Border.all(
+                              color: cp.isActive
+                                  ? Colors.grey.shade100
+                                  : AppTheme.dangerColor.withOpacity(0.3),
+                            ),
                           ),
                           child: Column(
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
                                             Flexible(
                                               child: Text(
-                                                cp.productName ?? 'Product ${cp.productId}',
-                                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: cp.isActive ? AppTheme.adminTextColor : Colors.grey),
+                                                cp.productName ??
+                                                    'Product ${cp.productId}',
+                                                style: TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: cp.isActive
+                                                      ? AppTheme.adminTextColor
+                                                      : Colors.grey,
+                                                ),
                                               ),
                                             ),
                                             if (!cp.isActive) ...[
                                               const SizedBox(width: 8),
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
                                                 decoration: BoxDecoration(
-                                                  color: AppTheme.dangerColor.withOpacity(0.1),
-                                                  borderRadius: BorderRadius.circular(4),
+                                                  color: AppTheme.dangerColor
+                                                      .withOpacity(0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
                                                 ),
                                                 child: const Text(
                                                   'TERMINATED',
@@ -761,7 +977,11 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                         const SizedBox(height: 4),
                                         Text(
                                           'GHC ${cp.pricePerBox?.toStringAsFixed(0) ?? '0'} / box • ${cp.boxesAssigned} Boxes',
-                                          style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w600, fontSize: 13),
+                                          style: TextStyle(
+                                            color: Colors.grey.shade400,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -770,18 +990,26 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                   Row(
                                     children: [
                                       Column(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
                                         children: [
                                           Text(
                                             'GHC ${(cp.boxesAssigned * (cp.pricePerBox ?? 0)).toStringAsFixed(0)}',
-                                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor),
+                                            style: const TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w900,
+                                              color: AppTheme.adminTextColor,
+                                            ),
                                           ),
                                         ],
                                       ),
                                       const SizedBox(width: 8),
                                       IconButton(
-                                        onPressed: () => _deleteProductFromCustomer(cp),
-                                        icon: const Icon(Icons.delete_outline_rounded),
+                                        onPressed: () =>
+                                            _deleteProductFromCustomer(cp),
+                                        icon: const Icon(
+                                          Icons.delete_outline_rounded,
+                                        ),
                                         color: AppTheme.dangerColor,
                                         iconSize: 20,
                                         tooltip: 'Delete Product',
@@ -797,31 +1025,50 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                 child: Divider(height: 1),
                               ),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'OUTSTANDING',
-                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 1),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.grey,
+                                          letterSpacing: 1,
+                                        ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         'GHC ${(cpBoxesLeft * (cp.pricePerBox ?? 0)).toStringAsFixed(0)}',
-                                        style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppTheme.adminAccentAlert),
+                                        style: const TextStyle(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppTheme.adminAccentAlert,
+                                        ),
                                       ),
                                     ],
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 10,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.adminAccentAlert.withOpacity(0.05),
+                                      color: AppTheme.adminAccentAlert
+                                          .withOpacity(0.05),
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     child: Text(
                                       '$cpBoxesLeft BOXES LEFT',
-                                      style: const TextStyle(color: AppTheme.adminAccentAlert, fontWeight: FontWeight.w900, fontSize: 12),
+                                      style: const TextStyle(
+                                        color: AppTheme.adminAccentAlert,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -830,11 +1077,206 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
                                 child: LinearProgressIndicator(
-                                  value: cp.boxesAssigned > 0 ? (cp.boxesPaid / cp.boxesAssigned) : 0,
+                                  value: cp.boxesAssigned > 0
+                                      ? (cp.boxesPaid / cp.boxesAssigned)
+                                      : 0,
                                   minHeight: 10,
                                   backgroundColor: Colors.grey.shade100,
-                                  valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.adminAccentRevenue),
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
+                                        AppTheme.adminAccentRevenue,
+                                      ),
                                 ),
+                              ),
+                              const SizedBox(height: 24),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'PRODUCT PAYMENT HISTORY',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.2,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  InkWell(
+                                    onTap: () => _selectDateRange(context),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.adminPrimaryColor
+                                            .withOpacity(0.05),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.calendar_today_rounded,
+                                            size: 12,
+                                            color: AppTheme.adminPrimaryColor,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            _startDate != null &&
+                                                    _endDate != null
+                                                ? '${_startDate!.day}/${_startDate!.month} - ${_endDate!.day}/${_endDate!.month}'
+                                                : 'Filter',
+                                            style: const TextStyle(
+                                              color: AppTheme.adminPrimaryColor,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Builder(
+                                builder: (context) {
+                                  final productPayments = payments
+                                      .where(
+                                        (p) =>
+                                            p.productId ==
+                                            cp.productId.toString(),
+                                      )
+                                      .toList();
+                                  if (productPayments.isEmpty) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 20,
+                                      ),
+                                      child: Center(
+                                        child: Column(
+                                          children: [
+                                            Icon(
+                                              Icons.receipt_long_rounded,
+                                              size: 32,
+                                              color: Colors.grey.shade200,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'No payments found',
+                                              style: TextStyle(
+                                                color: Colors.grey.shade300,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return ListView.separated(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    padding: EdgeInsets.zero,
+                                    itemCount: productPayments.length,
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(height: 8),
+                                    itemBuilder: (context, index) {
+                                      final payment = productPayments[index];
+                                      return Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade50,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.grey.shade200,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              height: 36,
+                                              width: 36,
+                                              decoration: BoxDecoration(
+                                                color: AppTheme
+                                                    .adminAccentRevenue
+                                                    .withOpacity(0.1),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.check_rounded,
+                                                color:
+                                                    AppTheme.adminAccentRevenue,
+                                                size: 18,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    payment.timestamp
+                                                        .toString()
+                                                        .substring(0, 16),
+                                                    style: TextStyle(
+                                                      color:
+                                                          Colors.grey.shade400,
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    payment.agentName ??
+                                                        'Unknown Agent',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: AppTheme
+                                                          .adminTextColor,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                Text(
+                                                  '+GHC ${payment.amountPaid.toStringAsFixed(0)}',
+                                                  style: const TextStyle(
+                                                    color: AppTheme
+                                                        .adminAccentRevenue,
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '${payment.boxesEquivalent ?? 0} BOXES',
+                                                  style: TextStyle(
+                                                    color: Colors.grey.shade400,
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 9,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -860,12 +1302,20 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                   children: [
                                     Text(
                                       product?.name ?? 'Unknown',
-                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor),
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.adminTextColor,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       'GHC ${product?.boxRate.toStringAsFixed(0)} / box • ${customer.totalBoxesAssigned} Boxes',
-                                      style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w600, fontSize: 13),
+                                      style: TextStyle(
+                                        color: Colors.grey.shade400,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -874,7 +1324,11 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                   children: [
                                     Text(
                                       'GHC ${(customer.totalBoxesAssigned * (product?.boxRate ?? 0)).toStringAsFixed(0)}',
-                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor),
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.adminTextColor,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -892,24 +1346,41 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                                   children: [
                                     const Text(
                                       'OUTSTANDING',
-                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 1),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.grey,
+                                        letterSpacing: 1,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       'GHC ${(boxesLeft * (product?.boxRate ?? 0)).toStringAsFixed(0)}',
-                                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppTheme.adminAccentAlert),
+                                      style: const TextStyle(
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.adminAccentAlert,
+                                      ),
                                     ),
                                   ],
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.adminAccentAlert.withOpacity(0.05),
+                                    color: AppTheme.adminAccentAlert
+                                        .withOpacity(0.05),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Text(
                                     '$boxesLeft BOXES LEFT',
-                                    style: const TextStyle(color: AppTheme.adminAccentAlert, fontWeight: FontWeight.w900, fontSize: 12),
+                                    style: const TextStyle(
+                                      color: AppTheme.adminAccentAlert,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -918,10 +1389,15 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                             ClipRRect(
                               borderRadius: BorderRadius.circular(10),
                               child: LinearProgressIndicator(
-                                value: customer.totalBoxesAssigned > 0 ? (customer.boxesPaid / customer.totalBoxesAssigned) : 0,
+                                value: customer.totalBoxesAssigned > 0
+                                    ? (customer.boxesPaid /
+                                          customer.totalBoxesAssigned)
+                                    : 0,
                                 minHeight: 10,
                                 backgroundColor: Colors.grey.shade100,
-                                valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.adminAccentRevenue),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  AppTheme.adminAccentRevenue,
+                                ),
                               ),
                             ),
                           ],
@@ -929,118 +1405,211 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                       ),
                     const SizedBox(height: 24),
 
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'PAYMENT HISTORY',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.2,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () => _selectDateRange(context),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppTheme.adminPrimaryColor.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
+                    Builder(
+                      builder: (context) {
+                        final productIds = customerProducts
+                            .map((cp) => cp.productId.toString())
+                            .toSet();
+                        final displayPayments = customerProducts.isEmpty
+                            ? payments
+                            : payments
+                                  .where(
+                                    (p) =>
+                                        p.productId == null ||
+                                        !productIds.contains(p.productId),
+                                  )
+                                  .toList();
+
+                        if (displayPayments.isEmpty &&
+                            customerProducts.isNotEmpty) {
+                          return const SizedBox.shrink();
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 32),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Icon(Icons.calendar_today_rounded, size: 14, color: AppTheme.adminPrimaryColor),
-                                const SizedBox(width: 8),
                                 Text(
-                                  _startDate != null && _endDate != null
-                                      ? '${_startDate!.day}/${_startDate!.month} - ${_endDate!.day}/${_endDate!.month}'
-                                      : 'Filter',
-                                  style: const TextStyle(color: AppTheme.adminPrimaryColor, fontWeight: FontWeight.w700, fontSize: 12),
+                                  customerProducts.isEmpty
+                                      ? 'PAYMENT HISTORY'
+                                      : 'OTHER PAYMENTS',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1.2,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: () => _selectDateRange(context),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.adminPrimaryColor
+                                          .withOpacity(0.05),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.calendar_today_rounded,
+                                          size: 14,
+                                          color: AppTheme.adminPrimaryColor,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _startDate != null && _endDate != null
+                                              ? '${_startDate!.day}/${_startDate!.month} - ${_endDate!.day}/${_endDate!.month}'
+                                              : 'Filter',
+                                          style: const TextStyle(
+                                            color: AppTheme.adminPrimaryColor,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    payments.isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 40),
-                            child: Center(
-                              child: Column(
-                                children: [
-                                  Icon(Icons.receipt_long_rounded, size: 48, color: Colors.grey.shade200),
-                                  const SizedBox(height: 12),
-                                  Text('No payments found', style: TextStyle(color: Colors.grey.shade300, fontWeight: FontWeight.w600)),
-                                ],
-                              ),
-                            ),
-                          )
-                        : ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            padding: const EdgeInsets.only(top: 16, bottom: 40),
-                            itemCount: payments.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              final payment = payments[index];
-                              return Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Colors.grey.shade100),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      height: 44,
-                                      width: 44,
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.adminAccentRevenue.withOpacity(0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.check_rounded, color: AppTheme.adminAccentRevenue),
+                            const SizedBox(height: 12),
+                            displayPayments.isEmpty
+                                ? Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 40,
                                     ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
+                                    child: Center(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            payment.timestamp.toString().substring(0, 16),
-                                            style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.w600),
+                                          Icon(
+                                            Icons.receipt_long_rounded,
+                                            size: 48,
+                                            color: Colors.grey.shade200,
                                           ),
-                                          const SizedBox(height: 2),
+                                          const SizedBox(height: 12),
                                           Text(
-                                            payment.agentName ?? 'Unknown Agent',
-                                            style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.adminTextColor),
+                                            'No payments found',
+                                            style: TextStyle(
+                                              color: Colors.grey.shade300,
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          '+GHC ${payment.amountPaid.toStringAsFixed(0)}',
-                                          style: const TextStyle(color: AppTheme.adminAccentRevenue, fontWeight: FontWeight.w900, fontSize: 16),
-                                        ),
-                                        Text(
-                                          '${payment.boxesEquivalent ?? 0} BOXES',
-                                          style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w700, fontSize: 10),
-                                        ),
-                                      ],
+                                  )
+                                : ListView.separated(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    padding: const EdgeInsets.only(
+                                      top: 16,
+                                      bottom: 40,
                                     ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
+                                    itemCount: displayPayments.length,
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(height: 12),
+                                    itemBuilder: (context, index) {
+                                      final payment = displayPayments[index];
+                                      return Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.grey.shade100,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              height: 44,
+                                              width: 44,
+                                              decoration: BoxDecoration(
+                                                color: AppTheme
+                                                    .adminAccentRevenue
+                                                    .withOpacity(0.1),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.check_rounded,
+                                                color:
+                                                    AppTheme.adminAccentRevenue,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    payment.timestamp
+                                                        .toString()
+                                                        .substring(0, 16),
+                                                    style: TextStyle(
+                                                      color:
+                                                          Colors.grey.shade400,
+                                                      fontSize: 11,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    payment.agentName ??
+                                                        'Unknown Agent',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: AppTheme
+                                                          .adminTextColor,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                Text(
+                                                  '+GHC ${payment.amountPaid.toStringAsFixed(0)}',
+                                                  style: const TextStyle(
+                                                    color: AppTheme
+                                                        .adminAccentRevenue,
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '${payment.boxesEquivalent ?? 0} BOXES',
+                                                  style: TextStyle(
+                                                    color: Colors.grey.shade400,
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 10,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -1051,7 +1620,13 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
     );
   }
 
-  Widget _buildInfoTile(String label, String value, IconData icon, {VoidCallback? onAction, String? actionLabel}) {
+  Widget _buildInfoTile(
+    String label,
+    String value,
+    IconData icon, {
+    VoidCallback? onAction,
+    String? actionLabel,
+  }) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -1067,16 +1642,38 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
               children: [
                 Icon(icon, size: 14, color: Colors.grey.shade400),
                 const SizedBox(width: 6),
-                Text(label, style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
-            Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.adminTextColor)),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: AppTheme.adminTextColor,
+              ),
+            ),
             if (onAction != null) ...[
               const SizedBox(height: 4),
               InkWell(
                 onTap: onAction,
-                child: Text(actionLabel ?? 'Edit', style: const TextStyle(color: AppTheme.adminPrimaryColor, fontWeight: FontWeight.w800, fontSize: 13)),
+                child: Text(
+                  actionLabel ?? 'Edit',
+                  style: const TextStyle(
+                    color: AppTheme.adminPrimaryColor,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
               ),
             ],
           ],
@@ -1089,7 +1686,8 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
     final nameController = TextEditingController(text: customer.fullName);
     final phoneController = TextEditingController(text: customer.phone);
     int? selectedZoneId = customer.zoneId;
-    String? selectedAgentId = customer.assignedAgentId; // Pre-select current agent
+    String? selectedAgentId =
+        customer.assignedAgentId; // Pre-select current agent
 
     final zonesAsync = ref.read(zonesListProvider);
     final agentsAsync = ref.read(agentsListProvider);
@@ -1133,10 +1731,14 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                 const SizedBox(height: 16),
                 agentsAsync.when(
                   data: (agents) {
-                    final activeAgents = agents.where((a) => a.isActive).toList();
+                    final activeAgents = agents
+                        .where((a) => a.isActive)
+                        .toList();
                     return DropdownButtonFormField<String>(
                       value: selectedAgentId,
-                      decoration: const InputDecoration(labelText: 'Assigned Agent'),
+                      decoration: const InputDecoration(
+                        labelText: 'Assigned Agent',
+                      ),
                       items: activeAgents.map((agent) {
                         return DropdownMenuItem(
                           value: agent.id,
@@ -1162,16 +1764,18 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
             ElevatedButton(
               onPressed: () async {
                 try {
-                  await ref.read(customerRepositoryProvider).updateCustomer(
-                    customerId: customer.id,
-                    fullName: nameController.text.trim(),
-                    phone: phoneController.text.trim(),
-                    zoneId: selectedZoneId,
-                    assignedAgentId: selectedAgentId,
-                  );
-                  
+                  await ref
+                      .read(customerRepositoryProvider)
+                      .updateCustomer(
+                        customerId: customer.id,
+                        fullName: nameController.text.trim(),
+                        phone: phoneController.text.trim(),
+                        zoneId: selectedZoneId,
+                        assignedAgentId: selectedAgentId,
+                      );
+
                   if (dialogContext.mounted) Navigator.pop(dialogContext);
-                  
+
                   // Refresh the screen
                   if (this.context.mounted) {
                     this.setState(() {});
@@ -1186,7 +1790,9 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                   if (this.context.mounted) {
                     ScaffoldMessenger.of(this.context).showSnackBar(
                       SnackBar(
-                        content: Text(e.toString().replaceAll('Exception: ', '')),
+                        content: Text(
+                          e.toString().replaceAll('Exception: ', ''),
+                        ),
                         backgroundColor: AppTheme.dangerColor,
                       ),
                     );
@@ -1203,25 +1809,29 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
 
   void _toggleActive(Customer customer) async {
     try {
-      await ref.read(customerRepositoryProvider).toggleCustomerActive(customer.id, !customer.isActive);
-      
+      await ref
+          .read(customerRepositoryProvider)
+          .toggleCustomerActive(customer.id, !customer.isActive);
+
       // Refresh providers
       ref.invalidate(allCustomersProvider);
-      
+
       setState(() {});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Customer ${customer.isActive ? 'deactivated' : 'activated'}'),
+            content: Text(
+              'Customer ${customer.isActive ? 'deactivated' : 'activated'}',
+            ),
             backgroundColor: AppTheme.secondaryColor,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -1253,11 +1863,13 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
 
     if (confirmed == true) {
       try {
-        await ref.read(customerProductRepositoryProvider).deleteCustomerProduct(customerProduct.id);
-        
+        await ref
+            .read(customerProductRepositoryProvider)
+            .deleteCustomerProduct(customerProduct.id);
+
         // Refresh the screen
         setState(() {});
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1285,7 +1897,8 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
 
   void _showTransferDialog(Customer customer) {
     final agentsAsync = ref.read(agentsListProvider);
-    String? selectedAgentId = customer.assignedAgentId; // Pre-select current agent
+    String? selectedAgentId =
+        customer.assignedAgentId; // Pre-select current agent
 
     showDialog(
       context: context,
@@ -1295,7 +1908,7 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
           content: agentsAsync.when(
             data: (agents) {
               final activeAgents = agents.where((a) => a.isActive).toList();
-              
+
               if (activeAgents.isEmpty) {
                 return const Text('No active agents available');
               }
@@ -1307,7 +1920,9 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: selectedAgentId,
-                    decoration: const InputDecoration(labelText: 'Select Agent'),
+                    decoration: const InputDecoration(
+                      labelText: 'Select Agent',
+                    ),
                     items: activeAgents.map((agent) {
                       return DropdownMenuItem(
                         value: agent.id,
@@ -1330,24 +1945,27 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: selectedAgentId == null || selectedAgentId == customer.assignedAgentId
+              onPressed:
+                  selectedAgentId == null ||
+                      selectedAgentId == customer.assignedAgentId
                   ? null
                   : () async {
                       try {
-                        await ref.read(customerRepositoryProvider).updateCustomerAgent(
-                          customer.id,
-                          selectedAgentId!,
-                        );
-                        
+                        await ref
+                            .read(customerRepositoryProvider)
+                            .updateCustomerAgent(customer.id, selectedAgentId!);
+
                         // Refresh providers
                         ref.invalidate(allCustomersProvider);
-                        
+
                         if (dialogContext.mounted) Navigator.pop(dialogContext);
                         if (this.context.mounted) {
                           this.setState(() {});
                           ScaffoldMessenger.of(this.context).showSnackBar(
                             const SnackBar(
-                              content: Text('Customer transferred successfully'),
+                              content: Text(
+                                'Customer transferred successfully',
+                              ),
                               backgroundColor: AppTheme.secondaryColor,
                             ),
                           );
@@ -1356,7 +1974,9 @@ class _CustomerProfileScreenState extends ConsumerState<CustomerProfileScreen> {
                         if (this.context.mounted) {
                           ScaffoldMessenger.of(this.context).showSnackBar(
                             SnackBar(
-                              content: Text(e.toString().replaceAll('Exception: ', '')),
+                              content: Text(
+                                e.toString().replaceAll('Exception: ', ''),
+                              ),
                               backgroundColor: AppTheme.dangerColor,
                             ),
                           );
